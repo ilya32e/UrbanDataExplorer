@@ -19,6 +19,7 @@ Le depot est pense comme un monorepo simple a faire evoluer: un pipeline batch, 
 - [Sources de donnees](#sources-de-donnees)
 - [Artefacts produits](#artefacts-produits)
 - [API](#api)
+- [Livrables](#livrables)
 - [Documentation](#documentation)
 - [Statut du projet](#statut-du-projet)
 
@@ -248,10 +249,30 @@ Exemples de metriques disponibles dans le dashboard:
 
 Pour le detail des formules et du sens de chaque indicateur, voir [`docs/data-catalog.md`](docs/data-catalog.md).
 
+## Livrables
+
+Le repo couvre les livrables principaux du projet:
+
+- code source complet: `pipeline + API + frontend`
+- documentation d'architecture et schemas data
+- mini data catalog avec justification des sources
+- support de soutenance storytelling + demo live
+
+Documents de reference:
+
+- [`docs/livrables.md`](docs/livrables.md)
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/data-catalog.md`](docs/data-catalog.md)
+- [`docs/deployment.md`](docs/deployment.md)
+- [`docs/soutenance.md`](docs/soutenance.md)
+
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md): vue d'ensemble technique et logique Bronze / Silver / Gold
 - [`docs/data-catalog.md`](docs/data-catalog.md): catalogue des sources et lecture des indicateurs
+- [`docs/deployment.md`](docs/deployment.md): etat actuel et strategies de deploiement du dashboard
+- [`docs/livrables.md`](docs/livrables.md): correspondance entre attentes de rendu et contenu du repo
+- [`docs/soutenance.md`](docs/soutenance.md): trame de storytelling et ordre de demo
 - [`pipeline/README.md`](pipeline/README.md): commandes du pipeline
 - [`api/README.md`](api/README.md): lancement du backend
 - [`frontend/README.md`](frontend/README.md): principes du frontend
