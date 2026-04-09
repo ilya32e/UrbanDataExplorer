@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Urban Data Explorer</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css"
+    />
+    <link rel="stylesheet" href="/static/styles.css?v=20260409-q6" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Urban Data Explorer</p>
+          <h1>Explorer le marche du logement au coeur de Paris.</h1>
+          <p class="hero-copy">
+            Prix de vente, revenus, loyers de reference, logements sociaux finances et
+            qualite de vie dans un seul tableau de bord.
+          </p>
+        </div>
+      </header>
+
+      <section class="control-bar">
+        <label>
+          Metrique cartographique
+          <select id="metric-select"></select>
+        </label>
+        <label>
+          Niveau cartographique
+          <select id="map-level-select"></select>
+        </label>
+        <label>
+          Annee ventes
+          <select id="sales-year-select"></select>
+        </label>
+        <label>
+          Arrondissement A
+          <select id="left-select"></select>
+        </label>
+        <label>
+          Arrondissement B
+          <select id="right-select"></select>
+        </label>
+      </section>
+
+      <section class="summary-grid" id="city-summary"></section>
+
+      <section class="main-grid">
+        <article class="panel map-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Carte</p>
+              <h2 id="map-title">Chargement de la couche...</h2>
+            </div>
+            <div class="metric-badge" id="metric-context"></div>
+          </div>
+          <div id="map"></div>
+          <div class="legend-row" id="map-legend"></div>
+        </article>
+
+        <aside class="side-stack">
+          <article class="panel">
+            <p class="eyebrow">Comparaison</p>
+            <div id="compare-panel"></div>
+          </article>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Timeline</p>
+              <h2 id="timeline-title">Evolution de l'arrondissement</h2>
+            </div>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>Prix median au m²</h3>
+              <div id="sales-chart"></div>
+            </div>
+            <div class="chart-card">
+              <h3>Logements sociaux finances</h3>
+              <div id="social-chart"></div>
+            </div>
+            <div class="chart-card">
+              <h3>Loyer majore moyen</h3>
+              <div id="rent-chart"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Lecture par arrondissement</p>
+              <h2>Vue synthetique des 20 arrondissements</h2>
+            </div>
+          </div>
+          <div class="ranking-grid" id="ranking-grid"></div>
+        </article>
+      </section>
+
+      <section class="footer-grid">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Sources ouvertes</p>
+              <h2>Jeux de donnees utilises dans le projet</h2>
+            </div>
+          </div>
+          <div class="source-list source-list-footer" id="source-list"></div>
+        </article>
+      </section>
+    </div>
+
+    <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
+    <script src="/static/app.js?v=20260409-q7" defer></script>
+  </body>
+</html>
