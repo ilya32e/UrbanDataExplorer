@@ -251,25 +251,19 @@ Pour le detail des formules et du sens de chaque indicateur, voir [`docs/data-ca
 
 ## Livrables
 
-Le repo couvre les livrables principaux du projet:
+Le repo couvre les 3 livrables principaux suivants:
 
-- code source complet: `pipeline + API + frontend`
-- documentation d'architecture et schemas data
-- mini data catalog avec justification des sources
-
-Documents de reference:
-
-- [`docs/livrables.md`](docs/livrables.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/data-catalog.md`](docs/data-catalog.md)
-- [`docs/deployment.md`](docs/deployment.md)
+1. Code source complet: `pipeline + API + frontend`
+   Preuves: `pipeline/`, `api/`, `frontend/`
+2. Documentation d'architecture et schemas data
+   Preuve: [`docs/architecture.md`](docs/architecture.md)
+3. Mini data catalog avec justification des sources et des choix
+   Preuve: [`docs/data-catalog.md`](docs/data-catalog.md)
 
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md): vue d'ensemble technique et logique Bronze / Silver / Gold
 - [`docs/data-catalog.md`](docs/data-catalog.md): catalogue des sources et lecture des indicateurs
-- [`docs/deployment.md`](docs/deployment.md): etat actuel et strategies de deploiement du dashboard
-- [`docs/livrables.md`](docs/livrables.md): correspondance entre attentes de rendu et contenu du repo
 - [`pipeline/README.md`](pipeline/README.md): commandes du pipeline
 - [`api/README.md`](api/README.md): lancement du backend
 - [`frontend/README.md`](frontend/README.md): principes du frontend
@@ -287,4 +281,3 @@ Les prochaines evolutions naturelles seraient:
 - industrialiser les tests et la validation des builds
 - packager le pipeline pour des executions planifiees
 - enrichir encore les metriques de qualite de vie et de couverture spatiale
-- deployer l'application au-dela d'un usage local
