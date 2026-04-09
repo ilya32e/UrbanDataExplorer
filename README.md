@@ -60,7 +60,7 @@ flowchart LR
 
 ### Flux principal
 
-1. Les sources ouvertes sont telechargees a partir de `config/sources.toml`.
+1. Les sources ouvertes sont telechargees a partir de `config/sources.yaml`.
 2. Le pipeline filtre, nettoie, geocode et enrichit les donnees.
 3. Les sorties `Gold` sont materialisees en `CSV`, `GeoJSON` et `JSON`.
 4. L'API FastAPI lit ces artefacts et expose les vues necessaires au dashboard.
@@ -106,7 +106,7 @@ python pipeline/run_imports.py list
 python pipeline/run_imports.py download
 ```
 
-Sans argument, `download` recupere toutes les sources declarees dans [`config/sources.toml`](config/sources.toml).
+Sans argument, `download` recupere toutes les sources declarees dans [`config/sources.yaml`](config/sources.yaml).
 
 Le depot GitHub est volontairement lean: les jeux de donnees `Bronze`, `Silver` et `Gold`, les logs locaux et les artefacts bureautiques ne sont pas versionnes. Chaque utilisateur telecharge donc les sources ouvertes et regenere ses sorties localement.
 
@@ -132,7 +132,7 @@ Ouvrez ensuite `http://127.0.0.1:8000`.
 
 ## Sources de donnees
 
-Le catalogue complet est maintenu dans [`config/sources.toml`](config/sources.toml). Les principales sources consommees par le build sont:
+Le catalogue complet est maintenu dans [`config/sources.yaml`](config/sources.yaml). Les principales sources consommees par le build sont:
 
 | Dataset | Role dans le projet | Maille principale |
 | --- | --- | --- |

@@ -11,7 +11,7 @@ python pipeline/run_imports.py download
 python pipeline/run_imports.py build
 ```
 
-Si aucun nom n'est passe a `download`, toutes les sources declarees dans `config/sources.toml` sont telechargees.
+Si aucun nom n'est passe a `download`, toutes les sources declarees dans `config/sources.yaml` sont telechargees.
 
 Les jeux `DVF` sont filtres automatiquement sur le departement `75`.
 Le build enrichit ensuite les ventes avec `adresses-ban`, un fallback `BAN PLUS`, puis les rattache aux `quartiers administratifs` et aux `IRIS` de Paris.

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-import tomllib
+import yaml
 
 from .paths import repo_path
 
@@ -30,14 +30,14 @@ class SourceConfig:
         return repo_path(self.target_dir) / self.filtered_file
 
 
-def _read_toml() -> dict[str, Any]:
-    config_path = repo_path("config/sources.toml")
-    with config_path.open("rb") as handle:
-        return tomllib.load(handle)
+def _read_yaml() -> dict[str, Any]:
+    config_path = repo_path("config/sources.yaml")
+    with config_path.open("r", encoding="utf-8") as handle:
+        return yaml.safe_load(handle) or {}
 
 
 def load_sources() -> dict[str, SourceConfig]:
-    data = _read_toml()
+    data = _read_yaml()
     sources = data.get("sources", {})
     result: dict[str, SourceConfig] = {}
 
@@ -57,4 +57,3 @@ def load_sources() -> dict[str, SourceConfig]:
         )
 
     return result
-

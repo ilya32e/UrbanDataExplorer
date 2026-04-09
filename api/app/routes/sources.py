@@ -1,5 +1,5 @@
 from pathlib import Path
-import tomllib
+import yaml
 
 from fastapi import APIRouter
 
@@ -13,9 +13,9 @@ def _repo_root() -> Path:
 
 @router.get("/sources")
 def list_sources() -> dict[str, object]:
-    config_path = _repo_root() / "config" / "sources.toml"
-    with config_path.open("rb") as handle:
-        payload = tomllib.load(handle)
+    config_path = _repo_root() / "config" / "sources.yaml"
+    with config_path.open("r", encoding="utf-8") as handle:
+        payload = yaml.safe_load(handle) or {}
 
     sources = []
     for name, source in payload.get("sources", {}).items():

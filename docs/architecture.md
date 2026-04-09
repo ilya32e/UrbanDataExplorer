@@ -33,7 +33,7 @@ flowchart LR
 
 Responsabilite:
 
-- telecharger les sources configurees dans `config/sources.toml`
+- telecharger les sources configurees dans `config/sources.yaml`
 - filtrer et nettoyer les donnees brutes
 - normaliser les variables de prix, surfaces, dates et identifiants geographiques
 - enrichir les transactions par geocodage, quartier, IRIS, rue et batiment proxy
@@ -101,7 +101,7 @@ UrbanDataExplorer/
 |- api/
 |  `- app/
 |- config/
-|  `- sources.toml
+|  `- sources.yaml
 |- data/
 |  |- bronze/
 |  |- silver/
