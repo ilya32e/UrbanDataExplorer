@@ -65,7 +65,7 @@ Limites:
 - il faut definir un cycle de mise a jour
 - la gouvernance des artefacts doit etre explicite
 
-## Recommandation pour une soutenance
+## Recommandation pour une presentation
 
 Pour un rendu de type cours / jury, la meilleure strategie est souvent:
 
@@ -79,6 +79,6 @@ Pour un rendu de type cours / jury, la meilleure strategie est souvent:
 - strategie de disponibilite des artefacts `Gold`
 - eventuel niveau de refresh des donnees
 
-## Message a utiliser pendant la soutenance
+## Message a utiliser pendant la presentation
 
 `Le projet est deployable, mais nous avons volontairement separe le code source du stockage des donnees generees. Cela garde le repo propre et reproductible, tout en laissant ouverte la strategie de publication des artefacts de test.`

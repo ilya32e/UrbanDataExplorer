@@ -198,7 +198,7 @@ Pour ce projet, les artefacts `Gold` suffisent:
 
 - volume raisonnable pour une demo
 - faible complexite d'exploitation
-- excellent niveau de lisibilite pour la soutenance
+- excellent niveau de lisibilite pour une presentation orale
 
 ### Pourquoi FastAPI sert aussi le frontend
 

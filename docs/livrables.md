@@ -8,7 +8,6 @@
 | 2. Documentation d'architecture & schemas data | Pret | `docs/architecture.md` |
 | 3. Mini data catalog + justification des sources / choix | Pret | `docs/data-catalog.md` |
 | 4. Dashboard web deploye avec jeux de test realistes | Partiellement pret | application locale fonctionnelle, repo GitHub pret; deploiement public a finaliser selon plateforme choisie |
-| 5. Soutenance orientee storytelling & demo live | Pret a repeter | `docs/soutenance.md` |
 
 ## Detail par livrable
 
@@ -66,21 +65,8 @@ Point restant:
 
 - choisir une plateforme de deploiement public compatible avec un build de donnees ou avec des artefacts `Gold` preconstruits
 
-### 5. Soutenance storytelling & demo
-
-Support principal:
-
-- `docs/soutenance.md`
-
-Contenu:
-
-- trame narrative
-- ordre de demo
-- messages cle
-- transitions entre probleme, data, produit et impact
-
 ## Recommandation
 
-Pour une remise propre, les livrables `1`, `2`, `3` et `5` sont deja presentables dans le repo.
+Pour une remise propre, les livrables `1`, `2` et `3` sont deja presentables dans le repo.
 
 Le livrable `4` est techniquement pret localement, mais la publication web depend encore d'une decision de plateforme et d'une strategie de mise a disposition des donnees de test.

@@ -36,7 +36,7 @@ Les sources ont ete choisies selon quatre criteres:
 | Source | Usage | Niveau geographique | Format | Pourquoi ce choix |
 | --- | --- | --- | --- | --- |
 | Arrondissements de Paris | Fond cartographique principal | arrondissement | GeoJSON | unite administrative la plus lisible pour le dashboard principal |
-| Quartiers administratifs de Paris | Aggregation fine des prix | quartier | GeoJSON | niveau plus fin que l'arrondissement, encore comprehensible en soutenance |
+| Quartiers administratifs de Paris | Aggregation fine des prix | quartier | GeoJSON | niveau plus fin que l'arrondissement, tout en restant lisible en presentation |
 | Voies de Paris | Representation lineaire des rues | rue | GeoJSON | evite de reduire la rue a un point et renforce la qualite visuelle de la carte |
 | IRIS Paris | Enrichissements statistiques fins | IRIS | CSV avec geometries | indispensable pour relier Filosofi a des zones coherentes |
 
@@ -130,7 +130,7 @@ Pourquoi:
 Limites:
 
 - indicateur derive, avec ponderations assumees
-- forte dimension methodologique a expliciter pendant la soutenance
+- forte dimension methodologique a expliciter pendant la presentation
 
 ### 6. Descendre a des mailles fines
 
@@ -174,7 +174,7 @@ Lecture du score:
 Pourquoi ce choix:
 
 - simplifier la lecture pour l'utilisateur final
-- garder une methode explicable pendant la soutenance
+- garder une methode explicable pendant la presentation
 - eviter un dashboard surcharge par plusieurs metriques tres techniques
 
 ## Remarques finales
