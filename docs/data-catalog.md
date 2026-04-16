@@ -153,9 +153,86 @@ Limites:
 - geocodage imparfait par nature
 - le niveau `building` reste un proxy d'adresse / batiment, pas une reference fonciere parfaite
 
+## Indicateurs exposes et mode de calcul
+
+Le dashboard expose 10 indicateurs principaux. Leur calcul repose sur les artefacts `Gold` produits par le pipeline.
+
+| Indicateur | Mode de calcul | Source principale |
+| --- | --- | --- |
+| `median_price_m2` | mediane de `valeur fonciere / surface batie` apres filtrage des ventes DVF et regroupement par maille / annee | DVF |
+| `transactions` | nombre de `transaction_id` uniques retenus dans le groupe | DVF |
+| `median_surface_m2` | mediane de `surface batie` dans le groupe | DVF |
+| `median_income_eur` | mediane de `DEC_MED21` sur les IRIS rattaches a l'arrondissement | INSEE Filosofi |
+| `reference_rent_majorated_eur_m2` | moyenne des loyers de reference majores des quartiers appartenant a l'arrondissement, par annee | Encadrement des loyers |
+| `social_units_financed` | somme annuelle des logements sociaux finances dans l'arrondissement | Logements sociaux finances |
+| `social_units_financed_5y` | somme de `social_units_financed` sur les 5 derniers millesimes disponibles | Logements sociaux finances |
+| `months_income_for_1sqm` | `median_price_m2 / (median_income_eur / 12)` | DVF + INSEE Filosofi |
+| `estimated_50m2_rent_effort_pct` | `reference_rent_majorated_eur_m2 * 50 / (median_income_eur / 12) * 100` | Loyers + INSEE Filosofi |
+| `quality_of_life_score` | score composite sur 10 construit a partir du bruit, de l'air et de la pression environnementale | Bruitparif |
+
+Remarque:
+
+- les vues `quartier`, `street` et `building` n'exposent pas tous ces indicateurs
+- a ces niveaux cartographiques fins, seules `median_price_m2`, `transactions` et `median_surface_m2` sont servies sur la carte
+- le dashboard principal par arrondissement est la vue qui consolide les 10 indicateurs
+
+## Detail des calculs derives
+
+### Marche immobilier
+
+Formules clefs:
+
+- `price_per_m2 = sale_value_eur / built_surface_m2`
+- `median_price_m2 = median(price_per_m2)`
+- `median_surface_m2 = median(built_surface_m2)`
+- `transactions = nunique(transaction_id)`
+
+### Accessibilite et effort locatif
+
+Formules clefs:
+
+- `months_income_for_1sqm = median_price_m2 / (median_income_eur / 12)`
+- `estimated_50m2_rent_effort_pct = reference_rent_majorated_eur_m2 * 50 / (median_income_eur / 12) * 100`
+
+### Logement social
+
+Formules clefs:
+
+- `social_units_financed = sum(nombre total de logements finances)` a l'annee et a l'arrondissement
+- `social_units_financed_5y = sum(social_units_financed)` sur les 5 derniers millesimes disponibles
+
+### Niveau de vie
+
+Aggregation retenue:
+
+- `median_income_eur = median(DEC_MED21)` sur les IRIS de l'arrondissement
+- `poverty_rate_pct = mean(DEC_TP6021)` sur les IRIS de l'arrondissement
+- `share_taxable_pct = mean(DEC_PIMP21)` sur les IRIS de l'arrondissement
+
 ## Qualite de vie
 
 Le dashboard n'expose plus separement `noise_score`, `air_score`, `high_noise_share_pct` et `environmental_pressure_index`. Ces composantes sont consolidees dans un seul indicateur:
+
+Composantes intermediaires:
+
+```text
+noise_score = sum(classe_bruit * surface_cellule) / sum(surface_cellule)
+air_score = sum(classe_air * surface_cellule) / sum(surface_cellule)
+high_noise_share_pct = surface(classe_bruit = 3) / surface_totale * 100
+
+environmental_pressure_index =
+  ((noise_score - 1) / 2) * 60 +
+  ((air_score - 1) / 2) * 40
+```
+
+Normalisations:
+
+```text
+noise_norm = 1 - ((noise_score - 1) / 2)
+air_norm = 1 - ((air_score - 1) / 2)
+high_noise_norm = 1 - (high_noise_share_pct / 100)
+env_norm = 1 - (environmental_pressure_index / 100)
+```
 
 ```text
 quality_of_life_score = 10 * (
