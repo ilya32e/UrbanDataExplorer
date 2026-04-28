@@ -7,7 +7,7 @@
 
 Urban Data Explorer est une plateforme data locale pour explorer les dynamiques du logement a Paris. Le projet assemble des sources ouvertes heterogenes, les normalise dans un pipeline Bronze / Silver / Gold, puis les sert via FastAPI dans une interface cartographique interactive.
 
-Le depot est pense comme un monorepo simple a faire evoluer: un pipeline batch, une API lisant directement les artefacts `data/gold`, et un frontend statique sans base de donnees ni couche applicative lourde.
+Le depot est pense comme un monorepo simple a faire evoluer: un pipeline batch, une API FastAPI, un frontend statique, un stockage `MySQL` pour les tables analytiques, et un stockage `MongoDB` pour les documents cartographiques et metadonnees.
 
 ## Sommaire
 
@@ -40,8 +40,9 @@ Le marche du logement parisien est documente par une multitude de jeux de donnee
 - Cartographie multi-niveaux: `arrondissement`, `quartier`, `street`, `building`
 - Vue de synthese ville + comparaison de deux arrondissements + timeline locale
 - Geocodage des ventes via `adresses-ban` avec fallback `BAN Plus`
-- API REST simple lisant directement les sorties `data/gold`
+- API REST simple lisant les tables `Gold` dans `MySQL` et les documents `GeoJSON/JSON` dans `MongoDB`
 - Frontend statique servi par FastAPI, donc zero bundle complexe a maintenir
+- Environnement `Docker Compose` pour lancer rapidement `mysql`, `mongo`, `api` et le service `pipeline`
 
 ## Architecture
 
@@ -50,9 +51,10 @@ flowchart LR
     A[Open data sources] --> B[Pipeline ingestion]
     B --> C[data/bronze]
     C --> D[Cleaning and enrichment]
-    D --> E[data/silver]
-    E --> F[Aggregations and geo outputs]
-    F --> G[data/gold]
+    D --> E[Silver tables in MySQL]
+    E --> F[Gold tables in MySQL]
+    E --> G[GeoJSON and JSON documents in MongoDB]
+    F --> H[FastAPI]
     G --> H[FastAPI]
     H --> I[REST API]
     H --> J[Static frontend]
@@ -62,20 +64,23 @@ flowchart LR
 
 1. Les sources ouvertes sont telechargees a partir de `config/sources.yaml`.
 2. Le pipeline filtre, nettoie, geocode et enrichit les donnees.
-3. Les sorties `Gold` sont materialisees en `CSV`, `GeoJSON` et `JSON`.
-4. L'API FastAPI lit ces artefacts et expose les vues necessaires au dashboard.
-5. Le frontend JavaScript consomme directement l'API et affiche les cartes, classements et comparaisons.
+3. Les sorties `Silver` et les tables `Gold` sont materialisees en SQL dans `MySQL`.
+4. Les couches `GeoJSON` et les metadonnees du dashboard sont materialisees en documents `MongoDB`.
+5. L'API FastAPI lit `MySQL` pour les indicateurs et `MongoDB` pour les documents cartographiques.
+6. Le frontend JavaScript consomme directement l'API et affiche les cartes, classements et comparaisons.
 
 ## Structure du depot
 
 ```text
 UrbanDataExplorer/
 |- api/                  # API FastAPI et routes du dashboard
+|- common/               # Helpers partages pour MySQL et MongoDB
 |- config/               # Catalogue des sources ouvertes
 |- data/                 # Zones bronze / silver / gold
 |- docs/                 # Documentation fonctionnelle et technique
 |- frontend/             # Interface HTML / CSS / JS servie par FastAPI
 |- pipeline/             # Ingestion, nettoyage et build des artefacts
+|- docker-compose.yml    # Stack locale mysql + mongo + api + pipeline
 `- README.md
 ```
 
@@ -85,6 +90,7 @@ UrbanDataExplorer/
 
 - `Python 3.11+`
 - acces reseau pour telecharger les sources ouvertes
+- `Docker` recommande pour lancer `MySQL` et `MongoDB`
 
 ### Installation
 
@@ -92,7 +98,26 @@ UrbanDataExplorer/
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r pipeline/requirements.txt -r api/requirements.txt
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
 ```
+
+### 0. Demarrer MySQL et MongoDB avec Docker
+
+```powershell
+docker compose up -d mysql mongo
+```
+
+Par defaut, les bases sont exposees sur:
+
+- MySQL: `localhost:3306`
+- MongoDB: `localhost:27017`
+
+Configuration utilisee par defaut:
+
+- base SQL: `urban_data_explorer`
+- utilisateur SQL: `urban`
+- mot de passe SQL: `urban`
+- base NoSQL: `urban_data_explorer`
 
 ### 1. Lister les sources configurees
 
@@ -106,14 +131,26 @@ python pipeline/run_imports.py list
 python pipeline/run_imports.py download
 ```
 
+Ou via Docker:
+
+```powershell
+docker compose run --rm pipeline python pipeline/run_imports.py download
+```
+
 Sans argument, `download` recupere toutes les sources declarees dans [`config/sources.yaml`](config/sources.yaml).
 
-Le depot GitHub est volontairement lean: les jeux de donnees `Bronze`, `Silver` et `Gold`, les logs locaux et les artefacts bureautiques ne sont pas versionnes. Chaque utilisateur telecharge donc les sources ouvertes et regenere ses sorties localement.
+Le depot GitHub est volontairement lean: les jeux de donnees `Bronze`, les tables SQL regenerees localement, les logs locaux et les artefacts bureautiques ne sont pas versionnes. Chaque utilisateur telecharge donc les sources ouvertes et regenere ses sorties localement.
 
-### 3. Construire les sorties Silver / Gold
+### 3. Construire les sorties Silver / Gold dans MySQL et MongoDB
 
 ```powershell
 python pipeline/run_imports.py build
+```
+
+Ou via Docker:
+
+```powershell
+docker compose run --rm pipeline python pipeline/run_imports.py build
 ```
 
 Option utile pour un build plus rapide si vous ne voulez pas recalculer Bruitparif:
@@ -125,10 +162,43 @@ python pipeline/run_imports.py build --skip-noise
 ### 4. Lancer l'application
 
 ```powershell
+docker compose up --build -d api
+```
+
+Ou en local hors Docker:
+
+```powershell
+$env:MYSQL_HOST="127.0.0.1"
+$env:MYSQL_PORT="3306"
+$env:MYSQL_DATABASE="urban_data_explorer"
+$env:MYSQL_USER="urban"
+$env:MYSQL_PASSWORD="urban"
+$env:MONGO_HOST="127.0.0.1"
+$env:MONGO_PORT="27017"
+$env:MONGO_DATABASE="urban_data_explorer"
 python -m uvicorn api.app.main:app --reload
 ```
 
 Ouvrez ensuite `http://127.0.0.1:8000`.
+
+### 5. Verifier que tout tourne
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+Invoke-RestMethod http://127.0.0.1:8000/api/meta
+```
+
+Si vous utilisez Docker, vous pouvez aussi verifier l'etat des services:
+
+```powershell
+docker compose ps
+```
+
+### 6. Arreter la stack
+
+```powershell
+docker compose down
+```
 
 ## Sources de donnees
 
@@ -195,35 +265,36 @@ Les composantes detaillees restent conservees dans les sorties `Gold` pour audit
 
 ## Artefacts produits
 
-Le pipeline produit plusieurs sorties exploitees par l'API et le dashboard:
+Le pipeline produit plusieurs sorties exploitees par l'API et le dashboard, reparties entre `MySQL` et `MongoDB`:
 
-| Artefact | Description |
-| --- | --- |
-| `data/gold/arrondissement_summary.csv` | table de synthese principale pour les 20 arrondissements |
-| `data/gold/sales_yearly.csv` | serie annuelle des indicateurs de ventes par arrondissement |
-| `data/gold/sales_quartier_yearly.csv` | vue agregree par quartier administratif |
-| `data/gold/sales_iris_yearly.csv` | vue agregree par IRIS |
-| `data/gold/sales_street_yearly.csv` | vue agregree par rue |
-| `data/gold/sales_building_yearly.csv` | vue agregree par batiment proxy / adresse |
-| `data/gold/sales_geocoded.csv` | transactions geocodees et enrichies |
-| `data/gold/arrondissements.geojson` | couche cartographique des arrondissements |
-| `data/gold/quartiers.geojson` | couche cartographique des quartiers |
-| `data/gold/streets.geojson` | couche cartographique des rues |
-| `data/gold/iris.geojson` | couche cartographique des IRIS |
-| `data/gold/dashboard.json` | metadonnees du dashboard, catalogue de metriques et annees disponibles |
+| Stockage | Objet | Description |
+| --- | --- | --- |
+| `MySQL` | `gold_arrondissement_summary` | table de synthese principale pour les 20 arrondissements |
+| `MySQL` | `gold_sales_yearly` | serie annuelle des indicateurs de ventes par arrondissement |
+| `MySQL` | `gold_sales_quartier_yearly` | vue agregree par quartier administratif |
+| `MySQL` | `gold_sales_iris_yearly` | vue agregree par IRIS |
+| `MySQL` | `gold_sales_street_yearly` | vue agregree par rue |
+| `MySQL` | `gold_sales_building_yearly` | vue agregree par batiment proxy / adresse |
+| `MySQL` | `gold_sales_geocoded` | transactions geocodees et enrichies |
+| `MongoDB` | `gold_arrondissements_geojson` | couche cartographique des arrondissements |
+| `MongoDB` | `gold_quartiers_geojson` | couche cartographique des quartiers |
+| `MongoDB` | `gold_streets_geojson` | couche cartographique des rues |
+| `MongoDB` | `gold_iris_geojson` | couche cartographique des IRIS |
+| `MongoDB` | `gold_dashboard_metadata` | metadonnees du dashboard, catalogue de metriques et annees disponibles |
+| `MongoDB` | `gold_sales_spatial_coverage` | metriques de couverture spatiale du geocodage |
 
 Le niveau `building` est un proxy d'adresse / batiment construit a partir de `cle_interop` BAN quand elle existe, avec repli sur la parcelle cadastrale puis sur une cle d'adresse normalisee.
 
 ## API
 
-L'API lit directement les artefacts `data/gold` et sert a la fois les donnees et le frontend statique.
+L'API lit directement `MySQL` pour les donnees tabulaires et `MongoDB` pour les documents, puis sert aussi le frontend statique.
 
 ### Endpoints principaux
 
 | Endpoint | Usage |
 | --- | --- |
 | `GET /` | page d'accueil du dashboard |
-| `GET /health` | verification simple du service |
+| `GET /health` | verification du service et des connexions `MySQL` + `MongoDB` |
 | `GET /sources` | catalogue des sources avec libelles, resumes et URLs |
 | `GET /api/meta` | metriques disponibles, annees et niveaux cartographiques |
 | `GET /api/overview?sales_year=2025` | synthese ville + donnees des arrondissements |
@@ -272,8 +343,9 @@ Le repo couvre les 3 livrables principaux suivants:
 
 Le projet est aujourd'hui structure comme un prototype data solide, local-first et facile a etendre:
 
-- pas de base de donnees a maintenir pour demarrer
-- artefacts `Gold` lisibles et versionnables
+- stack locale reproductible avec `Docker Compose`
+- separation claire entre `MySQL` pour le tabulaire et `MongoDB` pour les documents
+- couches `Gold` reconstruisibles localement a partir des sources `Bronze`
 - architecture simple pour ajouter de nouvelles sources ou de nouvelles mailles cartographiques
 
 Les prochaines evolutions naturelles seraient:

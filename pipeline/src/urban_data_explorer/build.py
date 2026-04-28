@@ -19,11 +19,12 @@ from shapely.ops import transform as shapely_transform
 from shapely.prepared import prep
 from shapely.strtree import STRtree
 
+from common.database import write_table_dataset
+from common.document_store import write_blob_dataset
+
 from .paths import repo_path
 
 
-GOLD_DIR = repo_path("data/gold")
-SILVER_DIR = repo_path("data/silver")
 BAN_PLUS_WFS_URL = "https://data.geopf.fr/wfs/ows"
 BAN_PLUS_CACHE_PATH = repo_path("data/bronze/reference/ban-plus-lien-adresse-parcelle.csv")
 QUALITY_OF_LIFE_WEIGHTS = {
@@ -39,10 +40,7 @@ NEUTRAL_ENVIRONMENT_DEFAULTS = {
 }
 
 
-def build_gold(include_noise: bool = True) -> dict[str, Path]:
-    GOLD_DIR.mkdir(parents=True, exist_ok=True)
-    SILVER_DIR.mkdir(parents=True, exist_ok=True)
-
+def build_gold(include_noise: bool = True) -> dict[str, str]:
     arr_reference = load_arrondissement_reference()
     quartier_reference = load_quartier_reference()
     street_reference = load_street_reference(arr_reference["geojson"])
@@ -115,63 +113,6 @@ def build_gold(include_noise: bool = True) -> dict[str, Path]:
     summary["rent_year"] = latest_rent_year
     summary["social_year"] = latest_social_year
 
-    silver_sales = SILVER_DIR / "sales_yearly.csv"
-    silver_sales_quartier = SILVER_DIR / "sales_quartier_yearly.csv"
-    silver_sales_iris = SILVER_DIR / "sales_iris_yearly.csv"
-    silver_sales_geocoded = SILVER_DIR / "sales_geocoded.csv"
-    silver_sales_street = SILVER_DIR / "sales_street_yearly.csv"
-    silver_sales_building = SILVER_DIR / "sales_building_yearly.csv"
-    silver_income = SILVER_DIR / "income_arrondissement.csv"
-    silver_rents = SILVER_DIR / "rents_yearly.csv"
-    silver_social = SILVER_DIR / "social_yearly.csv"
-    silver_noise = SILVER_DIR / "noise_arrondissement.csv"
-
-    sales_yearly.to_csv(silver_sales, index=False)
-    sales_quartier_yearly.to_csv(silver_sales_quartier, index=False)
-    sales_iris_yearly.to_csv(silver_sales_iris, index=False)
-    sales_geocoded.to_csv(silver_sales_geocoded, index=False)
-    sales_street_yearly.to_csv(silver_sales_street, index=False)
-    sales_building_yearly.to_csv(silver_sales_building, index=False)
-    income.to_csv(silver_income, index=False)
-    rents_yearly.to_csv(silver_rents, index=False)
-    social_yearly.to_csv(silver_social, index=False)
-    noise.to_csv(silver_noise, index=False)
-
-    gold_summary = GOLD_DIR / "arrondissement_summary.csv"
-    gold_sales = GOLD_DIR / "sales_yearly.csv"
-    gold_sales_quartier = GOLD_DIR / "sales_quartier_yearly.csv"
-    gold_sales_iris = GOLD_DIR / "sales_iris_yearly.csv"
-    gold_sales_geocoded = GOLD_DIR / "sales_geocoded.csv"
-    gold_sales_street = GOLD_DIR / "sales_street_yearly.csv"
-    gold_sales_building = GOLD_DIR / "sales_building_yearly.csv"
-    gold_social = GOLD_DIR / "social_yearly.csv"
-    gold_rents = GOLD_DIR / "rents_yearly.csv"
-    gold_income = GOLD_DIR / "income_arrondissement.csv"
-    gold_noise = GOLD_DIR / "noise_arrondissement.csv"
-    gold_geojson = GOLD_DIR / "arrondissements.geojson"
-    gold_quartiers_geojson = GOLD_DIR / "quartiers.geojson"
-    gold_streets_geojson = GOLD_DIR / "streets.geojson"
-    gold_iris_geojson = GOLD_DIR / "iris.geojson"
-    gold_dashboard = GOLD_DIR / "dashboard.json"
-    gold_spatial_coverage = GOLD_DIR / "sales_spatial_coverage.json"
-
-    summary.to_csv(gold_summary, index=False)
-    sales_yearly.to_csv(gold_sales, index=False)
-    sales_quartier_yearly.to_csv(gold_sales_quartier, index=False)
-    sales_iris_yearly.to_csv(gold_sales_iris, index=False)
-    sales_geocoded.to_csv(gold_sales_geocoded, index=False)
-    sales_street_yearly.to_csv(gold_sales_street, index=False)
-    sales_building_yearly.to_csv(gold_sales_building, index=False)
-    social_yearly.to_csv(gold_social, index=False)
-    rents_yearly.to_csv(gold_rents, index=False)
-    income.to_csv(gold_income, index=False)
-    noise.to_csv(gold_noise, index=False)
-    gold_geojson.write_text(json.dumps(arr_reference["geojson"], ensure_ascii=False), encoding="utf-8")
-    gold_quartiers_geojson.write_text(json.dumps(quartier_reference["geojson"], ensure_ascii=False), encoding="utf-8")
-    gold_streets_geojson.write_text(json.dumps(street_reference["geojson"], ensure_ascii=False), encoding="utf-8")
-    gold_iris_geojson.write_text(json.dumps(iris_reference["geojson"], ensure_ascii=False), encoding="utf-8")
-    gold_spatial_coverage.write_text(json.dumps(spatial_coverage, ensure_ascii=False, indent=2), encoding="utf-8")
-
     dashboard_payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "latest_sales_year": latest_sales_year,
@@ -185,31 +126,76 @@ def build_gold(include_noise: bool = True) -> dict[str, Path]:
         "spatial_sales_coverage": spatial_coverage,
         "metrics": metric_catalog(),
     }
-    gold_dashboard.write_text(json.dumps(dashboard_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    return persist_outputs_to_storage(
+        sales_yearly=sales_yearly,
+        sales_quartier_yearly=sales_quartier_yearly,
+        sales_iris_yearly=sales_iris_yearly,
+        sales_geocoded=sales_geocoded,
+        sales_street_yearly=sales_street_yearly,
+        sales_building_yearly=sales_building_yearly,
+        income=income,
+        rents_yearly=rents_yearly,
+        social_yearly=social_yearly,
+        noise=noise,
+        summary=summary,
+        arrondissement_geojson=arr_reference["geojson"],
+        quartier_geojson=quartier_reference["geojson"],
+        street_geojson=street_reference["geojson"],
+        iris_geojson=iris_reference["geojson"],
+        spatial_coverage=spatial_coverage,
+        dashboard_payload=dashboard_payload,
+    )
+
+
+def persist_outputs_to_storage(
+    *,
+    sales_yearly: pd.DataFrame,
+    sales_quartier_yearly: pd.DataFrame,
+    sales_iris_yearly: pd.DataFrame,
+    sales_geocoded: pd.DataFrame,
+    sales_street_yearly: pd.DataFrame,
+    sales_building_yearly: pd.DataFrame,
+    income: pd.DataFrame,
+    rents_yearly: pd.DataFrame,
+    social_yearly: pd.DataFrame,
+    noise: pd.DataFrame,
+    summary: pd.DataFrame,
+    arrondissement_geojson: dict[str, object],
+    quartier_geojson: dict[str, object],
+    street_geojson: dict[str, object],
+    iris_geojson: dict[str, object],
+    spatial_coverage: dict[str, object],
+    dashboard_payload: dict[str, object],
+) -> dict[str, str]:
     return {
-        "silver_sales": silver_sales,
-        "silver_sales_quartier": silver_sales_quartier,
-        "silver_sales_iris": silver_sales_iris,
-        "silver_sales_geocoded": silver_sales_geocoded,
-        "silver_sales_street": silver_sales_street,
-        "silver_sales_building": silver_sales_building,
-        "silver_income": silver_income,
-        "silver_rents": silver_rents,
-        "silver_social": silver_social,
-        "silver_noise": silver_noise,
-        "gold_summary": gold_summary,
-        "gold_geojson": gold_geojson,
-        "gold_quartiers_geojson": gold_quartiers_geojson,
-        "gold_streets_geojson": gold_streets_geojson,
-        "gold_iris_geojson": gold_iris_geojson,
-        "gold_sales_quartier": gold_sales_quartier,
-        "gold_sales_iris": gold_sales_iris,
-        "gold_sales_geocoded": gold_sales_geocoded,
-        "gold_sales_street": gold_sales_street,
-        "gold_sales_building": gold_sales_building,
-        "gold_spatial_coverage": gold_spatial_coverage,
-        "gold_dashboard": gold_dashboard,
+        "silver_sales": write_table_dataset("silver_sales", sales_yearly),
+        "silver_sales_quartier": write_table_dataset("silver_sales_quartier", sales_quartier_yearly),
+        "silver_sales_iris": write_table_dataset("silver_sales_iris", sales_iris_yearly),
+        "silver_sales_geocoded": write_table_dataset("silver_sales_geocoded", sales_geocoded),
+        "silver_sales_street": write_table_dataset("silver_sales_street", sales_street_yearly),
+        "silver_sales_building": write_table_dataset("silver_sales_building", sales_building_yearly),
+        "silver_income": write_table_dataset("silver_income", income),
+        "silver_rents": write_table_dataset("silver_rents", rents_yearly),
+        "silver_social": write_table_dataset("silver_social", social_yearly),
+        "silver_noise": write_table_dataset("silver_noise", noise),
+        "gold_summary": write_table_dataset("gold_summary", summary),
+        "gold_sales": write_table_dataset("gold_sales", sales_yearly),
+        "gold_sales_quartier": write_table_dataset("gold_sales_quartier", sales_quartier_yearly),
+        "gold_sales_iris": write_table_dataset("gold_sales_iris", sales_iris_yearly),
+        "gold_sales_geocoded": write_table_dataset("gold_sales_geocoded", sales_geocoded),
+        "gold_sales_street": write_table_dataset("gold_sales_street", sales_street_yearly),
+        "gold_sales_building": write_table_dataset("gold_sales_building", sales_building_yearly),
+        "gold_social": write_table_dataset("gold_social", social_yearly),
+        "gold_rents": write_table_dataset("gold_rents", rents_yearly),
+        "gold_income": write_table_dataset("gold_income", income),
+        "gold_noise": write_table_dataset("gold_noise", noise),
+        "gold_geojson": write_blob_dataset("gold_geojson", arrondissement_geojson),
+        "gold_quartiers_geojson": write_blob_dataset("gold_quartiers_geojson", quartier_geojson),
+        "gold_streets_geojson": write_blob_dataset("gold_streets_geojson", street_geojson),
+        "gold_iris_geojson": write_blob_dataset("gold_iris_geojson", iris_geojson),
+        "gold_spatial_coverage": write_blob_dataset("gold_spatial_coverage", spatial_coverage),
+        "gold_dashboard": write_blob_dataset("gold_dashboard", dashboard_payload),
     }
 
 

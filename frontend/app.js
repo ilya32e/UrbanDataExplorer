@@ -241,11 +241,14 @@ function renderCitySummary(city) {
 
   container.innerHTML = cards
     .map(
-      (card) => `
+      (card, index) => `
         <article class="summary-card">
-          <span>${card.label}</span>
+          <div class="summary-card-top">
+            <span class="summary-index">0${index + 1}</span>
+            <span class="summary-context">${card.context}</span>
+          </div>
+          <span class="summary-label">${card.label}</span>
           <strong>${card.value}</strong>
-          <span>${card.context}</span>
         </article>
       `,
     )
@@ -771,7 +774,7 @@ async function refreshComparison() {
       ${renderCard(data.left, "A")}
       ${renderCard(data.right, "B")}
     </div>
-    <div class="compare-card" style="margin-top:14px;">
+    <div class="compare-card compare-card--delta">
       <strong>Delta A - B</strong>
       ${deltaRows}
     </div>
@@ -792,17 +795,25 @@ function renderLineChart(containerId, series, key, color, formatter) {
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
+  const baseline = height - padding;
 
   const points = series.map((item, index) => {
     const x = padding + (index / Math.max(series.length - 1, 1)) * (width - padding * 2);
     const y = height - padding - ((Number(item[key]) - min) / range) * (height - padding * 2);
     return `${x},${y}`;
   });
+  const areaPoints = [`${padding},${baseline}`, ...points, `${width - padding},${baseline}`].join(" ");
+  const guides = [0, 0.33, 0.66, 1]
+    .map((ratio) => {
+      const y = padding + ratio * (height - padding * 2);
+      return `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="rgba(32, 25, 19, 0.12)" stroke-dasharray="4 6" />`;
+    })
+    .join("");
 
   const circles = series
     .map((item, index) => {
       const [x, y] = points[index].split(",");
-      return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"></circle>`;
+      return `<circle cx="${x}" cy="${y}" r="4.5" fill="${color}" stroke="#fff8ef" stroke-width="2"></circle>`;
     })
     .join("");
 
@@ -812,6 +823,14 @@ function renderLineChart(containerId, series, key, color, formatter) {
 
   container.innerHTML = `
     <svg class="chart-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${containerId}-gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.26"></stop>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+      ${guides}
+      <polygon points="${areaPoints}" fill="url(#${containerId}-gradient)"></polygon>
       <polyline
         fill="none"
         stroke="${color}"
@@ -865,7 +884,15 @@ async function init() {
     renderSources();
     await refreshAll();
   } catch (error) {
-    document.body.innerHTML = `<pre style="padding:24px;">${error.message}</pre>`;
+    document.body.innerHTML = `
+      <div style="padding:32px;font-family:Manrope,sans-serif;">
+        <div style="max-width:720px;margin:40px auto;padding:24px;border-radius:24px;background:#fff8ef;border:1px solid rgba(32,25,19,.08);box-shadow:0 18px 40px rgba(40,28,19,.12);">
+          <p style="margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8b321c;">Erreur de chargement</p>
+          <h1 style="margin:0 0 12px;font-size:32px;line-height:1.05;font-family:Fraunces,serif;">Le dashboard n'a pas pu demarrer.</h1>
+          <p style="margin:0;color:#6e645b;line-height:1.7;">${error.message}</p>
+        </div>
+      </div>
+    `;
   }
 }
 

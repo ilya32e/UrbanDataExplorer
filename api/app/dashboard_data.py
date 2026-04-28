@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from functools import lru_cache
 import json
-from pathlib import Path
 
 from fastapi import HTTPException
 import pandas as pd
 
+from common.database import TABULAR_DATASETS, read_table_dataset, table_exists
+from common.document_store import BLOB_DATASETS, blob_exists, read_blob_dataset
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-GOLD_DIR = REPO_ROOT / "data" / "gold"
 QUARTIER_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
 STREET_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
 BUILDING_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
@@ -21,65 +20,109 @@ MAP_LEVEL_LABELS = {
 }
 
 
-def _gold_path(filename: str) -> Path:
-    return GOLD_DIR / filename
+def _storage_unavailable(detail: str, exc: Exception | None = None) -> HTTPException:
+    if exc is not None:
+        return HTTPException(status_code=503, detail=f"{detail} ({exc})")
+    return HTTPException(status_code=503, detail=detail)
 
 
-def _ensure_exists(path: Path) -> None:
-    if not path.exists():
+def _ensure_table(dataset_name: str) -> None:
+    table_name = TABULAR_DATASETS[dataset_name]
+    try:
+        exists = table_exists(table_name)
+    except Exception as exc:
+        raise _storage_unavailable("MySQL est indisponible pour l'API.", exc) from exc
+
+    if not exists:
         raise HTTPException(
             status_code=503,
-            detail=f"Le fichier {path.name} est introuvable. Lancez `python pipeline/run_imports.py build`.",
+            detail=f"La table SQL {table_name} est introuvable. Lancez `python pipeline/run_imports.py build`.",
         )
+
+
+def _ensure_blob(dataset_name: str) -> None:
+    blob_name = BLOB_DATASETS[dataset_name]
+    try:
+        exists = blob_exists(dataset_name)
+    except Exception as exc:
+        raise _storage_unavailable("MongoDB est indisponible pour l'API.", exc) from exc
+
+    if not exists:
+        raise HTTPException(
+            status_code=503,
+            detail=f"La ressource NoSQL {blob_name} est introuvable. Lancez `python pipeline/run_imports.py build`.",
+        )
+
+
+def _normalize_string_columns(data: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    for column in columns:
+        if column in data.columns:
+            data[column] = data[column].map(lambda value: str(value) if pd.notna(value) else value)
+    return data
 
 
 @lru_cache(maxsize=1)
 def load_dashboard_payload() -> dict[str, object]:
-    path = _gold_path("dashboard.json")
-    _ensure_exists(path)
-    return json.loads(path.read_text(encoding="utf-8"))
+    _ensure_blob("gold_dashboard")
+    try:
+        return read_blob_dataset("gold_dashboard")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire les metadonnees du dashboard dans MongoDB.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_summary() -> pd.DataFrame:
-    path = _gold_path("arrondissement_summary.csv")
-    _ensure_exists(path)
-    return pd.read_csv(path)
+    _ensure_table("gold_summary")
+    try:
+        return read_table_dataset("gold_summary")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table de synthese des arrondissements.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_sales() -> pd.DataFrame:
-    path = _gold_path("sales_yearly.csv")
-    _ensure_exists(path)
-    return pd.read_csv(path)
+    _ensure_table("gold_sales")
+    try:
+        return read_table_dataset("gold_sales")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des ventes annuelles.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_social() -> pd.DataFrame:
-    path = _gold_path("social_yearly.csv")
-    _ensure_exists(path)
-    return pd.read_csv(path)
+    _ensure_table("gold_social")
+    try:
+        return read_table_dataset("gold_social")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des logements sociaux.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_rents() -> pd.DataFrame:
-    path = _gold_path("rents_yearly.csv")
-    _ensure_exists(path)
-    return pd.read_csv(path)
+    _ensure_table("gold_rents")
+    try:
+        return read_table_dataset("gold_rents")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des loyers.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_geojson() -> dict[str, object]:
-    path = _gold_path("arrondissements.geojson")
-    _ensure_exists(path)
-    return json.loads(path.read_text(encoding="utf-8"))
+    _ensure_blob("gold_geojson")
+    try:
+        return read_blob_dataset("gold_geojson")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la couche geojson des arrondissements dans MongoDB.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_sales_quartier() -> pd.DataFrame:
-    path = _gold_path("sales_quartier_yearly.csv")
-    _ensure_exists(path)
-    data = pd.read_csv(path, dtype={"quartier_id": str})
+    _ensure_table("gold_sales_quartier")
+    try:
+        data = read_table_dataset("gold_sales_quartier")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des ventes par quartier.", exc) from exc
+    data["quartier_id"] = data["quartier_id"].astype(str)
     if "arrondissement" in data.columns:
         data["arrondissement"] = pd.to_numeric(data["arrondissement"], errors="coerce")
     return data
@@ -87,9 +130,12 @@ def load_sales_quartier() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_sales_street() -> pd.DataFrame:
-    path = _gold_path("sales_street_yearly.csv")
-    _ensure_exists(path)
-    data = pd.read_csv(path, dtype={"street_key": str, "street_name": str, "commune_insee": str})
+    _ensure_table("gold_sales_street")
+    try:
+        data = read_table_dataset("gold_sales_street")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des ventes par rue.", exc) from exc
+    data = _normalize_string_columns(data, ["street_key", "street_name", "commune_insee"])
     for column in ["arrondissement", "year", "longitude", "latitude"]:
         if column in data.columns:
             data[column] = pd.to_numeric(data[column], errors="coerce")
@@ -98,26 +144,31 @@ def load_sales_street() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_street_geojson() -> dict[str, object]:
-    path = _gold_path("streets.geojson")
-    _ensure_exists(path)
-    return json.loads(path.read_text(encoding="utf-8"))
+    _ensure_blob("gold_streets_geojson")
+    try:
+        return read_blob_dataset("gold_streets_geojson")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la couche geojson des rues dans MongoDB.", exc) from exc
 
 
 @lru_cache(maxsize=1)
 def load_sales_building() -> pd.DataFrame:
-    path = _gold_path("sales_building_yearly.csv")
-    _ensure_exists(path)
-    data = pd.read_csv(
-        path,
-        dtype={
-            "building_id": str,
-            "building_id_source": str,
-            "building_label": str,
-            "commune_insee": str,
-            "street_name": str,
-            "house_number": str,
-            "house_suffix": str,
-        },
+    _ensure_table("gold_sales_building")
+    try:
+        data = read_table_dataset("gold_sales_building")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la table des ventes par batiment.", exc) from exc
+    data = _normalize_string_columns(
+        data,
+        [
+        "building_id",
+        "building_id_source",
+        "building_label",
+        "commune_insee",
+        "street_name",
+        "house_number",
+        "house_suffix",
+        ],
     )
     for column in ["arrondissement", "year", "longitude", "latitude"]:
         if column in data.columns:
@@ -127,9 +178,11 @@ def load_sales_building() -> pd.DataFrame:
 
 @lru_cache(maxsize=1)
 def load_quartier_geojson() -> dict[str, object]:
-    path = _gold_path("quartiers.geojson")
-    _ensure_exists(path)
-    return json.loads(path.read_text(encoding="utf-8"))
+    _ensure_blob("gold_quartiers_geojson")
+    try:
+        return read_blob_dataset("gold_quartiers_geojson")
+    except Exception as exc:
+        raise _storage_unavailable("Impossible de lire la couche geojson des quartiers dans MongoDB.", exc) from exc
 
 
 def metric_catalog() -> dict[str, dict[str, object]]:

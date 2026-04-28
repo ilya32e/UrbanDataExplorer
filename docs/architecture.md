@@ -7,9 +7,9 @@ Urban Data Explorer est une application data locale-first qui transforme plusieu
 L'architecture poursuit quatre objectifs:
 
 - isoler clairement l'ingestion, la transformation et l'exposition
-- garder des sorties auditables et reutilisables sans base de donnees
+- garder des sorties auditables et reutilisables avec un couple `MySQL` + `MongoDB`
 - faciliter l'evolution vers de nouvelles mailles geographiques et nouvelles metriques
-- permettre une demo fluide avec un frontend simple, rapide a lancer et a expliquer
+- permettre une demo fluide avec un frontend simple, rapide a lancer et a expliquer via `Docker Compose`
 
 ## Vue d'ensemble
 
@@ -18,9 +18,10 @@ flowchart LR
     A[Open data sources] --> B[Pipeline ingestion]
     B --> C[data/bronze]
     C --> D[Cleaning and normalization]
-    D --> E[data/silver]
-    E --> F[Aggregations and geo enrichments]
-    F --> G[data/gold]
+    D --> E[Silver tables in MySQL]
+    E --> F[Gold tables in MySQL]
+    E --> G[GeoJSON and JSON documents in MongoDB]
+    F --> H[FastAPI]
     G --> H[FastAPI]
     H --> I[REST endpoints]
     H --> J[Static frontend]
@@ -46,25 +47,26 @@ Principaux fichiers:
 - `pipeline/src/urban_data_explorer/build.py`
 - `pipeline/src/urban_data_explorer/ingestion/downloader.py`
 
-### 2. Stockage par zones
+### 2. Stockage par zones, SQL et NoSQL
 
 Responsabilite:
 
 - `Bronze`: conserver les fichiers sources telecharges
-- `Silver`: stocker les tables nettoyees et enrichies
-- `Gold`: stocker les artefacts optimises pour l'API et le dashboard
+- `Silver`: stocker les tables nettoyees et enrichies dans `MySQL`
+- `Gold`: stocker les tables analytiques dans `MySQL`
+- `Gold`: stocker les couches `GeoJSON` et metadonnees `JSON` dans `MongoDB`
 
-Le choix de fichiers plats `CSV`, `GeoJSON` et `JSON` rend les sorties:
+Le projet conserve donc les sources ouvertes en fichiers pour la zone `Bronze`, puis materialise les datasets prepares dans deux stockages complementaires:
 
-- versionnables si besoin
-- faciles a inspecter
-- simples a servir sans infrastructure supplementaire
+- `MySQL` pour les indicateurs tabulaires et relationnels
+- `MongoDB` pour les documents cartographiques et metadonnees
 
 ### 3. API FastAPI
 
 Responsabilite:
 
-- lire les artefacts `data/gold`
+- lire les tables `Gold` depuis `MySQL`
+- lire les documents `GeoJSON/JSON` depuis `MongoDB`
 - exposer les endpoints du dashboard
 - servir aussi les fichiers statiques du frontend
 
@@ -93,6 +95,7 @@ Stack:
 - `CSS`
 - `JavaScript`
 - `MapLibre GL`
+- interface servie directement par `FastAPI`
 
 ## Organisation du depot
 
@@ -100,6 +103,7 @@ Stack:
 UrbanDataExplorer/
 |- api/
 |  `- app/
+|- common/
 |- config/
 |  `- sources.yaml
 |- data/
@@ -120,85 +124,70 @@ flowchart TD
     A[Download] --> B[Bronze raw files]
     B --> C[Filter and normalize]
     C --> D[Geocode and spatial enrichments]
-    D --> E[Silver tables]
+    D --> E[Silver tables in MySQL]
     E --> F[Arrondissement aggregates]
     E --> G[Quartier / IRIS / Street / Building aggregates]
-    F --> H[dashboard.json]
-    F --> I[arrondissement_summary.csv]
-    G --> J[GeoJSON and detailed CSV outputs]
+    F --> H[gold_dashboard_metadata in MongoDB]
+    F --> I[gold_arrondissement_summary]
+    G --> J[GeoJSON collections in MongoDB and detailed SQL tables]
 ```
 
 ## Modele de donnees simplifie
 
 ```mermaid
-erDiagram
-    SALES_YEARLY {
-        int arrondissement
-        int year
-        float median_price_m2
-        int transactions
-        float median_surface_m2
-    }
+flowchart LR
+    SALES_YEARLY[sales_yearly]
+    INCOME_ARRONDISSEMENT[income_arrondissement]
+    RENTS_YEARLY[rents_yearly]
+    SOCIAL_YEARLY[social_yearly]
+    NOISE_ARRONDISSEMENT[noise_arrondissement]
+    ARRONDISSEMENT_SUMMARY[arrondissement_summary]
 
-    INCOME_ARRONDISSEMENT {
-        int arrondissement
-        float median_income_eur
-        float poverty_rate_pct
-    }
-
-    RENTS_YEARLY {
-        int arrondissement
-        int year
-        float reference_rent_majorated_eur_m2
-    }
-
-    SOCIAL_YEARLY {
-        int arrondissement
-        int year
-        int social_units_financed
-    }
-
-    NOISE_ARRONDISSEMENT {
-        int arrondissement
-        float noise_score
-        float air_score
-        float high_noise_share_pct
-    }
-
-    ARRONDISSEMENT_SUMMARY {
-        int arrondissement
-        float median_price_m2
-        float median_income_eur
-        float reference_rent_majorated_eur_m2
-        float quality_of_life_score
-    }
-
-    SALES_YEARLY ||--o{ ARRONDISSEMENT_SUMMARY : feeds
-    INCOME_ARRONDISSEMENT ||--o{ ARRONDISSEMENT_SUMMARY : enriches
-    RENTS_YEARLY ||--o{ ARRONDISSEMENT_SUMMARY : enriches
-    SOCIAL_YEARLY ||--o{ ARRONDISSEMENT_SUMMARY : enriches
-    NOISE_ARRONDISSEMENT ||--o{ ARRONDISSEMENT_SUMMARY : enriches
+    SALES_YEARLY --> ARRONDISSEMENT_SUMMARY
+    INCOME_ARRONDISSEMENT --> ARRONDISSEMENT_SUMMARY
+    RENTS_YEARLY --> ARRONDISSEMENT_SUMMARY
+    SOCIAL_YEARLY --> ARRONDISSEMENT_SUMMARY
+    NOISE_ARRONDISSEMENT --> ARRONDISSEMENT_SUMMARY
 ```
+
+Le viewer Markdown de certains environnements affiche mal `erDiagram`, donc la version ci-dessus reste volontairement simple. Les champs principaux sont resumes ci-dessous.
+
+| Jeu de donnees | Cle logique | Champs utiles |
+| --- | --- | --- |
+| `sales_yearly` | `arrondissement`, `year` | `median_price_m2`, `transactions`, `median_surface_m2` |
+| `income_arrondissement` | `arrondissement` | `median_income_eur`, `poverty_rate_pct` |
+| `rents_yearly` | `arrondissement`, `year` | `reference_rent_majorated_eur_m2` |
+| `social_yearly` | `arrondissement`, `year` | `social_units_financed` |
+| `noise_arrondissement` | `arrondissement` | `noise_score`, `air_score`, `high_noise_share_pct` |
+| `arrondissement_summary` | `arrondissement` | `median_price_m2`, `median_income_eur`, `reference_rent_majorated_eur_m2`, `quality_of_life_score` |
 
 ## Niveaux geographiques servis
 
 | Niveau | Usage | Sorties principales |
 | --- | --- | --- |
-| `arrondissement` | KPIs, comparaison, carte principale | `arrondissement_summary.csv`, `arrondissements.geojson` |
-| `quartier` | lecture plus fine du marche | `sales_quartier_yearly.csv`, `quartiers.geojson` |
-| `street` | lecture lineaire des voies | `sales_street_yearly.csv`, `streets.geojson` |
-| `building` | proxy d'adresse / batiment | `sales_building_yearly.csv`, `sales_geocoded.csv` |
-| `IRIS` | enrichissements statistiques fins | `sales_iris_yearly.csv`, `iris.geojson` |
+| `arrondissement` | KPIs, comparaison, carte principale | `gold_arrondissement_summary`, `gold_arrondissements_geojson` |
+| `quartier` | lecture plus fine du marche | `gold_sales_quartier_yearly`, `gold_quartiers_geojson` |
+| `street` | lecture lineaire des voies | `gold_sales_street_yearly`, `gold_streets_geojson` |
+| `building` | proxy d'adresse / batiment | `gold_sales_building_yearly`, `gold_sales_geocoded` |
+| `IRIS` | enrichissements statistiques fins | `gold_sales_iris_yearly`, `gold_iris_geojson` |
 
 ## Choix d'architecture
 
-### Pourquoi pas de base de donnees
+### Pourquoi MySQL et MongoDB
 
-Pour ce projet, les artefacts `Gold` suffisent:
+Le stockage mixte repond mieux au cadre pedagogique du projet:
 
-- volume raisonnable pour une demo
-- faible complexite d'exploitation
-- excellent niveau de lisibilite pour une presentation orale
+- les datasets prepares sont bien stockes sous forme de tables SQL interrogeables
+- les couches cartographiques et metadonnees sont stockees comme documents NoSQL
+- l'API n'est plus couplee a des fichiers `CSV` ou `JSON` disperses
+- `Docker Compose` simplifie le lancement de la base et de l'application
+
+### Comment la separation est faite
+
+- `MySQL` stocke les tables analytiques utilisees pour les KPIs, les comparaisons et les timelines
+- `MongoDB` stocke les `FeatureCollection` cartographiques et les documents de metadonnees
+- le pipeline ecrit dans les deux stockages pendant `build`
+- l'API assemble ensuite les reponses en lisant chaque type de donnee dans le moteur le plus adapte
 
 ### Pourquoi FastAPI sert aussi le frontend
 
@@ -222,6 +211,6 @@ Pour ce projet, les artefacts `Gold` suffisent:
 ## Evolutions naturelles
 
 - ajouter une CI pour verifier le pipeline et l'API
-- industrialiser la regeneration des artefacts `Gold`
+- industrialiser la regeneration des tables `Gold`
 - brancher un stockage objet ou une base analytique si les volumes augmentent
 - ajouter une strategie de deploiement public du dashboard avec jeux de test preconstruits
