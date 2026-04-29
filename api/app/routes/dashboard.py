@@ -1,6 +1,15 @@
 from fastapi import APIRouter
 
-from ..dashboard_data import compare_arrondissements, map_geojson, metadata, overview_for_year, reference_geojson, timeline_for_arrondissement
+from ..dashboard_data import (
+    compare_arrondissements,
+    compare_quartiers,
+    map_geojson,
+    metadata,
+    overview_for_year,
+    quartiers_for_year,
+    reference_geojson,
+    timeline_for_arrondissement,
+)
 
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
@@ -24,6 +33,16 @@ def timeline(arrondissement: int) -> dict[str, object]:
 @router.get("/compare")
 def compare(left: int, right: int, sales_year: int | None = None) -> dict[str, object]:
     return compare_arrondissements(left=left, right=right, sales_year=sales_year)
+
+
+@router.get("/quartiers")
+def quartiers(sales_year: int | None = None) -> dict[str, object]:
+    return quartiers_for_year(sales_year=sales_year)
+
+
+@router.get("/quartiers/compare")
+def compare_q(left: str, right: str, sales_year: int | None = None) -> dict[str, object]:
+    return compare_quartiers(left=left, right=right, sales_year=sales_year)
 
 
 @router.get("/map")

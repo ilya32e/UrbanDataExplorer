@@ -305,6 +305,34 @@ def timeline_for_arrondissement(arrondissement: int) -> dict[str, object]:
     }
 
 
+def _arrondissement_name_lookup() -> dict[int, str]:
+    summary = load_summary()[["arrondissement", "name"]].drop_duplicates().copy()
+    summary["arrondissement"] = pd.to_numeric(summary["arrondissement"], errors="coerce").astype(int)
+    return {int(row["arrondissement"]): str(row["name"]) for _, row in summary.iterrows()}
+
+
+def quartiers_for_year(sales_year: int | None = None) -> dict[str, object]:
+    sales = load_sales_quartier()
+    selected_year = _resolve_sales_year(sales, sales_year)
+    yearly_sales = sales.loc[sales["year"] == selected_year].copy()
+    name_lookup = _arrondissement_name_lookup()
+
+    yearly_sales["quartier_id"] = yearly_sales["quartier_id"].astype(str)
+    yearly_sales["arrondissement"] = pd.to_numeric(yearly_sales["arrondissement"], errors="coerce").astype(int)
+    yearly_sales["quartier_name"] = yearly_sales["quartier_name"].fillna(yearly_sales["quartier_id"])
+    yearly_sales["arrondissement_name"] = yearly_sales["arrondissement"].map(name_lookup)
+
+    options = yearly_sales[
+        ["quartier_id", "quartier_name", "arrondissement", "arrondissement_name"]
+    ].drop_duplicates()
+    options = options.sort_values(["arrondissement", "quartier_name"]).reset_index(drop=True)
+
+    return {
+        "sales_year": selected_year,
+        "quartiers": json.loads(options.to_json(orient="records")),
+    }
+
+
 def compare_arrondissements(left: int, right: int, sales_year: int | None = None) -> dict[str, object]:
     overview = overview_for_year(sales_year=sales_year)
     rows = {item["arrondissement"]: item for item in overview["arrondissements"]}
@@ -331,6 +359,46 @@ def compare_arrondissements(left: int, right: int, sales_year: int | None = None
 
     return {
         "sales_year": overview["city"]["selected_sales_year"],
+        "left": rows[left],
+        "right": rows[right],
+        "delta": delta,
+    }
+
+
+def compare_quartiers(left: str, right: str, sales_year: int | None = None) -> dict[str, object]:
+    sales = load_sales_quartier()
+    selected_year = _resolve_sales_year(sales, sales_year)
+    yearly_sales = sales.loc[sales["year"] == selected_year].copy()
+    name_lookup = _arrondissement_name_lookup()
+
+    yearly_sales["quartier_id"] = yearly_sales["quartier_id"].astype(str)
+    yearly_sales["arrondissement"] = pd.to_numeric(yearly_sales["arrondissement"], errors="coerce").astype(int)
+    yearly_sales["arrondissement_name"] = yearly_sales["arrondissement"].map(name_lookup)
+
+    rows = {item["quartier_id"]: item for item in json.loads(yearly_sales.to_json(orient="records"))}
+
+    if left not in rows or right not in rows:
+        raise HTTPException(status_code=404, detail="Impossible de comparer ces quartiers.")
+
+    metrics = [
+        "median_price_m2",
+        "transactions",
+        "median_sale_value_eur",
+        "median_surface_m2",
+        "median_rooms",
+        "apartment_share_pct",
+        "house_share_pct",
+    ]
+    delta = {}
+    for metric in metrics:
+        left_value = rows[left].get(metric)
+        right_value = rows[right].get(metric)
+        if left_value is None or right_value is None:
+            continue
+        delta[metric] = round(float(left_value) - float(right_value), 2)
+
+    return {
+        "sales_year": selected_year,
         "left": rows[left],
         "right": rows[right],
         "delta": delta,

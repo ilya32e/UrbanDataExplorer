@@ -543,6 +543,103 @@ select:focus-visible {
   gap: 14px;
 }
 
+.compare-panel-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.compare-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(54, 93, 81, 0.08);
+  border: 1px solid rgba(32, 25, 19, 0.08);
+  width: fit-content;
+}
+
+.compare-switch-button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--muted-strong);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.compare-switch-button.is-active {
+  background: linear-gradient(135deg, rgba(196, 100, 63, 0.95), rgba(139, 50, 28, 0.95));
+  color: #fff7ef;
+  box-shadow: 0 10px 20px rgba(139, 50, 28, 0.18);
+}
+
+.compare-switch-button:hover,
+.compare-switch-button:focus-visible {
+  transform: translateY(-1px);
+}
+
+.compare-section {
+  display: grid;
+  gap: 14px;
+}
+
+.compare-section-head {
+  display: grid;
+  gap: 6px;
+}
+
+.compare-section-head h3 {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  line-height: 1.16;
+  letter-spacing: -0.03em;
+}
+
+.compare-helper {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.compare-helper-tight {
+  margin-top: 8px;
+}
+
+.compare-inline-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.compare-inline-controls label {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(32, 25, 19, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.compare-inline-controls label span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+}
+
 .compare-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -828,6 +925,10 @@ select:focus-visible {
 
   .control-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .compare-inline-controls {
+    grid-template-columns: 1fr;
   }
 
   .summary-grid {

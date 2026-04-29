@@ -14,6 +14,10 @@ const state = {
   },
   referenceRequests: {},
   arrondissementLookup: {},
+  quartiers: [],
+  quartierLeft: null,
+  quartierRight: null,
+  compareMode: "arrondissement",
 };
 
 const MAP_METRIC_PREFERENCES = {
@@ -70,7 +74,13 @@ function formatMetricValue(metric, value) {
 }
 
 function safeMetricLabel(key) {
-  return state.meta?.metrics?.[key]?.label ?? key;
+  const fallbackLabels = {
+    median_sale_value_eur: "Valeur mediane de vente",
+    median_rooms: "Pieces medianes",
+    apartment_share_pct: "Part appartements",
+    house_share_pct: "Part maisons",
+  };
+  return state.meta?.metrics?.[key]?.label ?? fallbackLabels[key] ?? key;
 }
 
 function formatCount(value) {
@@ -94,6 +104,49 @@ function formatArrondissementTitle(arrondissement, name = null) {
   const resolvedName = name ?? arrondissementName(arrondissement);
   const ordinal = formatArrondissementOrdinal(arrondissement);
   return resolvedName ? `${ordinal} · ${resolvedName}` : ordinal;
+}
+
+function quartierDisplayName(item) {
+  return item?.quartier_name ?? item?.name ?? item?.quartier_id ?? "Quartier";
+}
+
+function formatQuartierTitle(item) {
+  if (!item) {
+    return "Quartier";
+  }
+  return `${quartierDisplayName(item)} · ${formatArrondissementTitle(item.arrondissement, item.arrondissement_name)}`;
+}
+
+function quartiersForArrondissement(arrondissement) {
+  return state.quartiers.filter((item) => Number(item.arrondissement) === Number(arrondissement));
+}
+
+function syncQuartierSelection() {
+  const leftQuartiers = quartiersForArrondissement(state.left);
+  const rightQuartiers = quartiersForArrondissement(state.right);
+
+  if (!leftQuartiers.length || !rightQuartiers.length) {
+    state.quartierLeft = null;
+    state.quartierRight = null;
+    return;
+  }
+
+  const leftIds = new Set(leftQuartiers.map((item) => String(item.quartier_id)));
+  const rightIds = new Set(rightQuartiers.map((item) => String(item.quartier_id)));
+
+  if (!state.quartierLeft || !leftIds.has(String(state.quartierLeft))) {
+    state.quartierLeft = String(leftQuartiers[0].quartier_id);
+  }
+
+  if (!state.quartierRight || !rightIds.has(String(state.quartierRight))) {
+    state.quartierRight = String(rightQuartiers[0].quartier_id);
+  }
+
+  if (state.left === state.right && String(state.quartierLeft) === String(state.quartierRight)) {
+    const fallback =
+      rightQuartiers.find((item) => String(item.quartier_id) !== String(state.quartierLeft)) ?? rightQuartiers[0];
+    state.quartierRight = String(fallback.quartier_id);
+  }
 }
 
 function buildingSourceLabel(source) {
@@ -293,6 +346,195 @@ function renderRanking(arrondissements) {
       `,
     )
     .join("");
+}
+
+function renderComparePanel(arrondissementData, quartierData) {
+  const arrMetrics = [
+    "median_price_m2",
+    "median_income_eur",
+    "reference_rent_majorated_eur_m2",
+    "social_units_financed",
+    "quality_of_life_score",
+    "months_income_for_1sqm",
+    "estimated_50m2_rent_effort_pct",
+  ];
+  const quartierMetrics = [
+    "median_price_m2",
+    "transactions",
+    "median_sale_value_eur",
+    "median_surface_m2",
+    "median_rooms",
+    "apartment_share_pct",
+    "house_share_pct",
+  ];
+
+  const renderMetricRows = (metrics, item) =>
+    metrics
+      .map(
+        (metric) => `
+          <div class="compare-row">
+            <small>${safeMetricLabel(metric)}</small>
+            <span>${formatMetricValue(metric, item?.[metric])}</span>
+          </div>
+        `,
+      )
+      .join("");
+
+  const renderDeltaRows = (metrics, delta) =>
+    metrics
+      .map(
+        (metric) => `
+          <div class="compare-row">
+            <small>${safeMetricLabel(metric)}</small>
+            <span class="${deltaClass(delta?.[metric] ?? 0)}">
+              ${(delta?.[metric] ?? 0) > 0 ? "+" : ""}${formatMetricValue(metric, delta?.[metric])}
+            </span>
+          </div>
+        `,
+      )
+      .join("");
+
+  const leftQuartiers = quartiersForArrondissement(state.left);
+  const rightQuartiers = quartiersForArrondissement(state.right);
+  const leftQuartierOptions = leftQuartiers
+    .map(
+      (item) => `
+        <option value="${item.quartier_id}">
+          ${formatQuartierTitle(item)}
+        </option>
+      `,
+    )
+    .join("");
+  const rightQuartierOptions = rightQuartiers
+    .map(
+      (item) => `
+        <option value="${item.quartier_id}">
+          ${formatQuartierTitle(item)}
+        </option>
+      `,
+    )
+    .join("");
+
+  const isQuartierMode = state.compareMode === "quartier";
+  const leftItem = isQuartierMode ? quartierData?.left : arrondissementData.left;
+  const rightItem = isQuartierMode ? quartierData?.right : arrondissementData.right;
+  const activeMetrics = isQuartierMode ? quartierMetrics : arrMetrics;
+  const activeDelta = isQuartierMode ? quartierData?.delta : arrondissementData.delta;
+  const activeLabel = isQuartierMode ? "Quartiers" : "Arrondissements";
+  const activeTitle = isQuartierMode ? "Comparer deux quartiers" : "Comparer deux arrondissements";
+  const activeHelper = isQuartierMode
+    ? "Les listes Quartier A et Quartier B suivent les arrondissements A et B choisis dans le panneau du haut."
+    : "Les selections A et B utilisent les filtres du panneau du haut.";
+
+  const activeControls = isQuartierMode
+    ? `
+      <div class="compare-inline-controls">
+        <label>
+          <span>Quartier A · ${formatArrondissementTitle(state.left)}</span>
+          <select id="quartier-left-select">${leftQuartierOptions}</select>
+        </label>
+        <label>
+          <span>Quartier B · ${formatArrondissementTitle(state.right)}</span>
+          <select id="quartier-right-select">${rightQuartierOptions}</select>
+        </label>
+      </div>
+    `
+    : `<p class="compare-helper">${activeHelper}</p>`;
+
+  const leftCardTitle = isQuartierMode ? quartierDisplayName(leftItem) : leftItem?.name;
+  const rightCardTitle = isQuartierMode ? quartierDisplayName(rightItem) : rightItem?.name;
+  const leftCardLabel = isQuartierMode
+    ? arrondissementName(leftItem?.arrondissement) ?? "Paris"
+    : formatArrondissementOrdinal(leftItem?.arrondissement);
+  const rightCardLabel = isQuartierMode
+    ? arrondissementName(rightItem?.arrondissement) ?? "Paris"
+    : formatArrondissementOrdinal(rightItem?.arrondissement);
+  const deltaTitle = isQuartierMode ? "Delta Quartier A - Quartier B" : "Delta Arrondissement A - Arrondissement B";
+
+  document.getElementById("compare-panel").innerHTML = `
+    <section class="compare-section">
+      <div class="compare-section-head">
+        <p class="eyebrow">${activeLabel}</p>
+        <h3>${activeTitle}</h3>
+        <p class="compare-helper">${activeHelper}</p>
+      </div>
+      <div class="compare-switch" role="tablist" aria-label="Mode de comparaison">
+        <button
+          type="button"
+          class="compare-switch-button ${!isQuartierMode ? "is-active" : ""}"
+          data-compare-mode="arrondissement"
+        >
+          Arrondissements
+        </button>
+        <button
+          type="button"
+          class="compare-switch-button ${isQuartierMode ? "is-active" : ""}"
+          data-compare-mode="quartier"
+        >
+          Quartiers
+        </button>
+      </div>
+      ${activeControls}
+      ${
+        leftItem && rightItem
+          ? `
+            <div class="compare-grid">
+              <article class="compare-card">
+                <span class="compare-arrondissement-label">${leftCardLabel}</span>
+                <strong>A: ${leftCardTitle}</strong>
+                ${isQuartierMode ? `<p class="compare-helper compare-helper-tight">${formatArrondissementOrdinal(leftItem.arrondissement)}</p>` : ""}
+                ${renderMetricRows(activeMetrics, leftItem)}
+              </article>
+              <article class="compare-card">
+                <span class="compare-arrondissement-label">${rightCardLabel}</span>
+                <strong>B: ${rightCardTitle}</strong>
+                ${isQuartierMode ? `<p class="compare-helper compare-helper-tight">${formatArrondissementOrdinal(rightItem.arrondissement)}</p>` : ""}
+                ${renderMetricRows(activeMetrics, rightItem)}
+              </article>
+            </div>
+            <div class="compare-card compare-card--delta">
+              <strong>${deltaTitle}</strong>
+              ${renderDeltaRows(activeMetrics, activeDelta)}
+            </div>
+          `
+          : `<p class="empty-state">Aucune comparaison disponible.</p>`
+      }
+    </section>
+  `;
+
+  document.querySelectorAll("[data-compare-mode]").forEach((button) => {
+    button.onclick = async () => {
+      const nextMode = button.getAttribute("data-compare-mode");
+      if (!nextMode || nextMode === state.compareMode) {
+        return;
+      }
+      state.compareMode = nextMode;
+      await refreshComparison();
+    };
+  });
+
+  const quartierLeftSelect = document.getElementById("quartier-left-select");
+  const quartierRightSelect = document.getElementById("quartier-right-select");
+  if (quartierLeftSelect && quartierRightSelect) {
+    quartierLeftSelect.value = String(state.quartierLeft);
+    quartierRightSelect.value = String(state.quartierRight);
+    quartierLeftSelect.onchange = async (event) => {
+      state.quartierLeft = event.target.value;
+      if (state.quartierLeft === state.quartierRight) {
+        const fallback = rightQuartiers.find((item) => String(item.quartier_id) !== String(state.quartierLeft));
+        state.quartierRight = fallback ? String(fallback.quartier_id) : String(state.quartierLeft);
+      }
+      await refreshComparison();
+    };
+    quartierRightSelect.onchange = async (event) => {
+      state.quartierRight = event.target.value;
+      if (state.quartierRight === state.quartierLeft) {
+        const fallback = leftQuartiers.find((item) => String(item.quartier_id) !== String(state.quartierRight));
+        state.quartierLeft = fallback ? String(fallback.quartier_id) : String(state.quartierRight);
+      }
+      await refreshComparison();
+    };
+  }
 }
 
 function renderSources() {
@@ -792,57 +1034,22 @@ function deltaClass(value) {
 }
 
 async function refreshComparison() {
-  const data = await fetchJson(`/api/compare?left=${state.left}&right=${state.right}&sales_year=${state.salesYear}`);
-  const metrics = [
-    "median_price_m2",
-    "median_income_eur",
-    "reference_rent_majorated_eur_m2",
-    "social_units_financed",
-    "quality_of_life_score",
-    "months_income_for_1sqm",
-    "estimated_50m2_rent_effort_pct",
-  ];
+  const [arrondissementData, quartierOptionsPayload] = await Promise.all([
+    fetchJson(`/api/compare?left=${state.left}&right=${state.right}&sales_year=${state.salesYear}`),
+    fetchJson(`/api/quartiers?sales_year=${state.salesYear}`),
+  ]);
 
-  const renderCard = (side, title) => `
-    <article class="compare-card">
-      <span class="compare-arrondissement-label">${formatArrondissementOrdinal(side.arrondissement)}</span>
-      <strong>${title}: ${side.name}</strong>
-      ${metrics
-        .map(
-          (metric) => `
-            <div class="compare-row">
-              <small>${safeMetricLabel(metric)}</small>
-              <span>${formatMetricValue(metric, side[metric])}</span>
-            </div>
-          `,
-        )
-        .join("")}
-    </article>
-  `;
+  state.quartiers = quartierOptionsPayload.quartiers ?? [];
+  syncQuartierSelection();
 
-  const deltaRows = metrics
-    .map(
-      (metric) => `
-        <div class="compare-row">
-          <small>${safeMetricLabel(metric)}</small>
-          <span class="${deltaClass(data.delta[metric])}">
-            ${data.delta[metric] > 0 ? "+" : ""}${formatMetricValue(metric, data.delta[metric])}
-          </span>
-        </div>
-      `,
-    )
-    .join("");
+  let quartierData = null;
+  if (state.quartierLeft && state.quartierRight) {
+    quartierData = await fetchJson(
+      `/api/quartiers/compare?left=${encodeURIComponent(state.quartierLeft)}&right=${encodeURIComponent(state.quartierRight)}&sales_year=${state.salesYear}`,
+    );
+  }
 
-  document.getElementById("compare-panel").innerHTML = `
-    <div class="compare-grid">
-      ${renderCard(data.left, "A")}
-      ${renderCard(data.right, "B")}
-    </div>
-    <div class="compare-card compare-card--delta">
-      <strong>Delta A - B</strong>
-      ${deltaRows}
-    </div>
-  `;
+  renderComparePanel(arrondissementData, quartierData);
 }
 
 function renderLineChart(containerId, series, key, color, formatter) {
