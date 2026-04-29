@@ -578,6 +578,21 @@ select:focus-visible {
   line-height: 1.35;
 }
 
+.compare-arrondissement-label,
+.ranking-arrondissement-label {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(54, 93, 81, 0.1);
+  color: var(--olive);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .compare-row {
   display: flex;
   justify-content: space-between;
@@ -688,7 +703,8 @@ select:focus-visible {
 }
 
 .ranking-card strong {
-  margin-top: 14px;
+  margin-top: 12px;
+  font-size: 1.18rem;
 }
 
 .ranking-meta {

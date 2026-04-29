@@ -13,6 +13,7 @@ const state = {
     street: null,
   },
   referenceRequests: {},
+  arrondissementLookup: {},
 };
 
 const MAP_METRIC_PREFERENCES = {
@@ -75,6 +76,24 @@ function safeMetricLabel(key) {
 function formatCount(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? number.format(numeric) : "n.d.";
+}
+
+function arrondissementName(arrondissement) {
+  return state.arrondissementLookup[Number(arrondissement)] ?? null;
+}
+
+function formatArrondissementOrdinal(arrondissement) {
+  const numeric = Number(arrondissement);
+  if (!Number.isFinite(numeric)) {
+    return "Arrondissement";
+  }
+  return numeric === 1 ? "1er arrondissement" : `${number.format(numeric)}e arrondissement`;
+}
+
+function formatArrondissementTitle(arrondissement, name = null) {
+  const resolvedName = name ?? arrondissementName(arrondissement);
+  const ordinal = formatArrondissementOrdinal(arrondissement);
+  return resolvedName ? `${ordinal} · ${resolvedName}` : ordinal;
 }
 
 function buildingSourceLabel(source) {
@@ -186,7 +205,7 @@ function populateArrondissementSelects(arrondissements) {
     arrondissements.forEach((item) => {
       const option = document.createElement("option");
       option.value = String(item.arrondissement);
-      option.textContent = `${item.arrondissement} - ${item.name}`;
+      option.textContent = formatArrondissementTitle(item.arrondissement, item.name);
       select.append(option);
     });
     if (arrondissements.some((item) => item.arrondissement === previous)) {
@@ -262,7 +281,8 @@ function renderRanking(arrondissements) {
       (item) => `
         <article class="ranking-card">
           <span class="rank">#${item.rank_by_price}</span>
-          <strong>${item.arrondissement}. ${item.name}</strong>
+          <span class="ranking-arrondissement-label">${formatArrondissementOrdinal(item.arrondissement)}</span>
+          <strong>${item.name}</strong>
           <div class="ranking-meta">
             <span>Prix median: ${formatMetricValue("median_price_m2", item.median_price_m2)}</span>
             <span>Revenu median: ${formatMetricValue("median_income_eur", item.median_income_eur)}</span>
@@ -353,7 +373,7 @@ function mapAreaLabel(properties) {
   if (properties.map_level === "quartier") {
     return properties.name;
   }
-  return `${properties.arrondissement}. ${properties.name}`;
+  return formatArrondissementTitle(properties.arrondissement, properties.name);
 }
 
 function mapPopupHtml(properties) {
@@ -362,11 +382,11 @@ function mapPopupHtml(properties) {
   const lines = [`${label}: ${value}`, `Prix median: ${formatMetricValue("median_price_m2", properties.median_price_m2)}`];
 
   if (properties.map_level === "street") {
-    lines.unshift(`Arrondissement: ${formatCount(properties.arrondissement)}`);
+    lines.unshift(`Arrondissement: ${formatArrondissementTitle(properties.arrondissement)}`);
     lines.push(`Transactions: ${formatMetricValue("transactions", properties.transactions)}`);
     lines.push(`Batiments: ${formatCount(properties.buildings)}`);
   } else if (properties.map_level === "building") {
-    lines.unshift(`Arrondissement: ${formatCount(properties.arrondissement)}`);
+    lines.unshift(`Arrondissement: ${formatArrondissementTitle(properties.arrondissement)}`);
     if (properties.street_name) {
       lines.push(`Rue: ${properties.street_name}`);
     }
@@ -374,7 +394,7 @@ function mapPopupHtml(properties) {
     lines.push(`Parcelles: ${formatCount(properties.parcel_count)}`);
     lines.push(`Source batiment: ${buildingSourceLabel(properties.building_id_source)}`);
   } else if (properties.map_level === "quartier") {
-    lines.unshift(`Arrondissement: ${number.format(Number(properties.arrondissement))}`);
+    lines.unshift(`Arrondissement: ${formatArrondissementTitle(properties.arrondissement)}`);
     lines.push(`Transactions: ${formatMetricValue("transactions", properties.transactions)}`);
   } else {
     lines.push(`Revenu median: ${formatMetricValue("median_income_eur", properties.median_income_eur)}`);
@@ -391,6 +411,7 @@ function createMap() {
     container: "map",
     style: {
       version: 8,
+      glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
       sources: {},
       layers: [
         {
@@ -549,6 +570,45 @@ function createMap() {
     });
 
     state.map.addLayer({
+      id: "map-labels",
+      type: "symbol",
+      source: "map-features",
+      filter: [
+        "all",
+        ["==", ["geometry-type"], "Polygon"],
+        ["==", ["get", "map_level"], "arrondissement"],
+      ],
+      layout: {
+        "text-field": [
+          "concat",
+          [
+            "case",
+            ["==", ["to-number", ["get", "arrondissement"]], 1],
+            "1er",
+            ["concat", ["to-string", ["to-number", ["get", "arrondissement"]]], "e"],
+          ],
+          "\n",
+          ["get", "name"],
+        ],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 10, 10, 11.5, 11, 13, 12.5],
+        "text-line-height": 1.05,
+        "text-letter-spacing": 0.02,
+        "text-max-width": 8,
+        "text-justify": "center",
+        "text-anchor": "center",
+        "text-allow-overlap": false,
+        visibility: "visible",
+      },
+      paint: {
+        "text-color": "#17393d",
+        "text-halo-color": "rgba(255, 248, 239, 0.95)",
+        "text-halo-width": 1.4,
+        "text-halo-blur": 0.6,
+      },
+    });
+
+    state.map.addLayer({
       id: "map-points",
       type: "circle",
       source: "map-features",
@@ -564,6 +624,7 @@ function createMap() {
 
     registerMapInteractions("map-fill");
     registerMapInteractions("map-line");
+    registerMapInteractions("map-labels");
     registerMapInteractions("map-points");
   });
 }
@@ -670,9 +731,11 @@ async function refreshMap() {
 
   const polygonVisibility = isPointLevel(data.metric.level) ? "none" : "visible";
   const pointVisibility = isPointLevel(data.metric.level) ? "visible" : "none";
+  const labelVisibility = data.metric.level === "arrondissement" ? "visible" : "none";
   state.map.setLayoutProperty("map-fill", "visibility", polygonVisibility);
   state.map.setLayoutProperty("map-line", "visibility", polygonVisibility);
   state.map.setLayoutProperty("map-highlight", "visibility", polygonVisibility);
+  state.map.setLayoutProperty("map-labels", "visibility", labelVisibility);
   state.map.setLayoutProperty("map-points", "visibility", pointVisibility);
 
   updateMapSelection();
@@ -742,7 +805,8 @@ async function refreshComparison() {
 
   const renderCard = (side, title) => `
     <article class="compare-card">
-      <strong>${title}: ${side.arrondissement}. ${side.name}</strong>
+      <span class="compare-arrondissement-label">${formatArrondissementOrdinal(side.arrondissement)}</span>
+      <strong>${title}: ${side.name}</strong>
       ${metrics
         .map(
           (metric) => `
@@ -847,7 +911,7 @@ function renderLineChart(containerId, series, key, color, formatter) {
 
 async function refreshTimeline() {
   const data = await fetchJson(`/api/timeline?arrondissement=${state.left}`);
-  document.getElementById("timeline-title").textContent = `Evolution du ${data.arrondissement}. ${data.name}`;
+  document.getElementById("timeline-title").textContent = `Evolution du ${formatArrondissementTitle(data.arrondissement, data.name)}`;
 
   renderLineChart("sales-chart", data.sales, "median_price_m2", "#8f3215", (value) =>
     formatMetricValue("median_price_m2", value),
@@ -862,6 +926,9 @@ async function refreshTimeline() {
 
 async function refreshOverview() {
   const data = await fetchJson(`/api/overview?sales_year=${state.salesYear}`);
+  state.arrondissementLookup = Object.fromEntries(
+    data.arrondissements.map((item) => [Number(item.arrondissement), item.name]),
+  );
   renderCitySummary(data.city);
   renderRanking(data.arrondissements);
   populateArrondissementSelects(data.arrondissements);
