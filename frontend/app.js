@@ -83,6 +83,14 @@ function safeMetricLabel(key) {
   return state.meta?.metrics?.[key]?.label ?? fallbackLabels[key] ?? key;
 }
 
+function mapLevelLabel(level = state.mapLevel) {
+  return state.meta?.map_levels?.find((item) => item.key === level)?.label ?? level;
+}
+
+function metricLabel(metric = state.metric) {
+  return state.meta?.metrics?.[metric]?.label ?? safeMetricLabel(metric);
+}
+
 function formatCount(value) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? number.format(numeric) : "n.d.";
@@ -115,6 +123,23 @@ function formatQuartierTitle(item) {
     return "Quartier";
   }
   return `${quartierDisplayName(item)} · ${formatArrondissementTitle(item.arrondissement, item.arrondissement_name)}`;
+}
+
+function renderSelectionNarrative() {
+  const viewSummary = document.getElementById("view-summary");
+  const comparisonSummary = document.getElementById("comparison-summary");
+  if (!viewSummary || !comparisonSummary || !state.meta) {
+    return;
+  }
+
+  viewSummary.textContent = `Vue active: ${mapLevelLabel()} sur ${metricLabel()} - ventes ${state.salesYear}.`;
+
+  const leftLabel = formatArrondissementTitle(state.left);
+  const rightLabel = formatArrondissementTitle(state.right);
+  comparisonSummary.textContent =
+    state.compareMode === "quartier"
+      ? `Comparaison active: ${leftLabel} vs ${rightLabel}. Les listes de quartiers suivent automatiquement ces deux arrondissements.`
+      : `Comparaison active: ${leftLabel} vs ${rightLabel}. Basculez en mode quartier pour descendre a l'echelle locale.`;
 }
 
 function quartiersForArrondissement(arrondissement) {
@@ -423,8 +448,8 @@ function renderComparePanel(arrondissementData, quartierData) {
   const activeLabel = isQuartierMode ? "Quartiers" : "Arrondissements";
   const activeTitle = isQuartierMode ? "Comparer deux quartiers" : "Comparer deux arrondissements";
   const activeHelper = isQuartierMode
-    ? "Les listes Quartier A et Quartier B suivent les arrondissements A et B choisis dans le panneau du haut."
-    : "Les selections A et B utilisent les filtres du panneau du haut.";
+    ? "Choisissez un quartier dans chaque arrondissement pour comparer deux micros secteurs."
+    : "La comparaison reprend directement les zones A et B choisies juste au-dessus.";
 
   const activeControls = isQuartierMode
     ? `
@@ -439,7 +464,7 @@ function renderComparePanel(arrondissementData, quartierData) {
         </label>
       </div>
     `
-    : `<p class="compare-helper">${activeHelper}</p>`;
+    : "";
 
   const leftCardTitle = isQuartierMode ? quartierDisplayName(leftItem) : leftItem?.name;
   const rightCardTitle = isQuartierMode ? quartierDisplayName(rightItem) : rightItem?.name;
@@ -449,7 +474,7 @@ function renderComparePanel(arrondissementData, quartierData) {
   const rightCardLabel = isQuartierMode
     ? arrondissementName(rightItem?.arrondissement) ?? "Paris"
     : formatArrondissementOrdinal(rightItem?.arrondissement);
-  const deltaTitle = isQuartierMode ? "Delta Quartier A - Quartier B" : "Delta Arrondissement A - Arrondissement B";
+  const deltaTitle = isQuartierMode ? "Ecarts Quartier A - Quartier B" : "Ecarts Arrondissement A - Arrondissement B";
 
   document.getElementById("compare-panel").innerHTML = `
     <section class="compare-section">
@@ -981,6 +1006,7 @@ async function refreshMap() {
   state.map.setLayoutProperty("map-points", "visibility", pointVisibility);
 
   updateMapSelection();
+  renderSelectionNarrative();
 }
 
 function updateMapSelection() {
@@ -1050,6 +1076,7 @@ async function refreshComparison() {
   }
 
   renderComparePanel(arrondissementData, quartierData);
+  renderSelectionNarrative();
 }
 
 function renderLineChart(containerId, series, key, color, formatter) {
@@ -1139,6 +1166,7 @@ async function refreshOverview() {
   renderCitySummary(data.city);
   renderRanking(data.arrondissements);
   populateArrondissementSelects(data.arrondissements);
+  renderSelectionNarrative();
 }
 
 async function refreshAll() {

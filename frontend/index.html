@@ -14,72 +14,109 @@
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="/static/styles.css?v=20260429-ui5" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260429-ui7" />
   </head>
   <body>
     <div class="page-shell">
       <header class="hero">
         <div class="hero-copy-block">
           <p class="eyebrow">Urban Data Explorer</p>
-          <h1>
-            Explorer le marche du <span class="hero-accent">logement</span> au coeur de
-            Paris.
-          </h1>
+          <h1>Lire Paris plus vite, du <span class="hero-accent">macro</span> au quartier.</h1>
           <p class="hero-copy">
-            Prix de vente, revenus, loyers de reference, logements sociaux finances et
-            qualite de vie dans un seul tableau de bord.
+            Un tableau de bord unique pour visualiser les prix de vente, les revenus, les
+            loyers, le logement social et la qualite de vie sans se perdre dans les vues.
           </p>
+          <div class="hero-actions" aria-label="Points forts du dashboard">
+            <span class="hero-pill">Carte multi-echelles</span>
+            <span class="hero-pill">Comparaison arrondissement ou quartier</span>
+            <span class="hero-pill">Lecture rapide des tendances</span>
+          </div>
         </div>
 
-        <aside class="hero-note">
-          <p class="eyebrow">Lecture rapide</p>
-          <h2>Un dashboard urbain du macro au micro.</h2>
-          <p class="hero-note-copy">
-            On commence avec une vue ville, puis on descend au quartier, a la rue et
-            jusqu'au batiment proxy pour comparer les dynamiques locales.
+        <aside class="hero-guide">
+          <p class="eyebrow">Prise en main</p>
+          <h2>Un parcours simple en trois etapes.</h2>
+          <p class="hero-guide-copy">
+            Commencez par choisir la vue de carte, puis les zones a comparer. Le dashboard
+            met ensuite a jour la carte, la comparaison et la timeline.
           </p>
-          <div class="hero-note-grid">
-            <div class="hero-note-card">
-              <span>Focus</span>
-              <strong>Prix, loyers, revenus, social, qualite de vie</strong>
-            </div>
+          <div class="hero-step-list">
+            <article class="hero-step-card">
+              <span class="hero-step-index">1</span>
+              <div class="hero-step-copy">
+                <strong>Choisir la vue</strong>
+                <span>Metrique, niveau cartographique et annee.</span>
+              </div>
+            </article>
+            <article class="hero-step-card">
+              <span class="hero-step-index">2</span>
+              <div class="hero-step-copy">
+                <strong>Comparer deux zones</strong>
+                <span>Arrondissements, puis quartiers si besoin.</span>
+              </div>
+            </article>
+            <article class="hero-step-card">
+              <span class="hero-step-index">3</span>
+              <div class="hero-step-copy">
+                <strong>Lire les tendances</strong>
+                <span>Carte, timeline et panorama des 20 arrondissements.</span>
+              </div>
+            </article>
           </div>
         </aside>
       </header>
 
       <section class="control-panel panel">
-        <div class="panel-head panel-head-compact">
+        <div class="panel-head">
           <div>
             <p class="eyebrow">Pilotage</p>
-            <h2>Filtres et angle de lecture</h2>
+            <h2>Choisir la vue de la carte</h2>
           </div>
+          <p class="panel-kicker">
+            Commencez par la metrique, le niveau cartographique et l'annee. La comparaison
+            des zones se fait ensuite directement dans le panneau de droite.
+          </p>
         </div>
 
-        <div class="control-bar">
-          <label>
-            <span>Metrique cartographique</span>
-          <select id="metric-select"></select>
-          </label>
-          <label>
-            <span>Niveau cartographique</span>
-          <select id="map-level-select"></select>
-          </label>
-          <label>
-            <span>Annee ventes</span>
-          <select id="sales-year-select"></select>
-          </label>
-          <label>
-            <span>Arrondissement A</span>
-          <select id="left-select"></select>
-          </label>
-          <label>
-            <span>Arrondissement B</span>
-          <select id="right-select"></select>
-          </label>
-        </div>
+        <article class="control-group">
+          <div class="control-group-head">
+            <span class="control-step">1</span>
+            <div>
+              <p class="eyebrow">Carte</p>
+              <h3>Choisir la vue</h3>
+            </div>
+          </div>
+          <div class="control-bar control-bar--view">
+            <label>
+              <span>Metrique cartographique</span>
+              <select id="metric-select"></select>
+            </label>
+            <label>
+              <span>Niveau cartographique</span>
+              <select id="map-level-select"></select>
+            </label>
+            <label>
+              <span>Annee ventes</span>
+              <select id="sales-year-select"></select>
+            </label>
+          </div>
+          <p class="control-context" id="view-summary"></p>
+        </article>
       </section>
 
-      <section class="summary-grid" id="city-summary"></section>
+      <section class="overview-panel panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Vue ville</p>
+            <h2>Paris en un coup d'oeil</h2>
+          </div>
+          <p class="panel-kicker">
+            Les cinq indicateurs les plus utiles pour situer rapidement la pression
+            immobiliere et sociale a l'echelle de la ville.
+          </p>
+        </div>
+        <div class="summary-grid" id="city-summary"></div>
+      </section>
 
       <section class="main-grid">
         <article class="panel map-panel">
@@ -90,13 +127,45 @@
             </div>
             <div class="metric-badge" id="metric-context"></div>
           </div>
+          <p class="panel-kicker">
+            Zoomez d'un niveau a l'autre pour garder le contexte spatial tout en changeant
+            d'echelle.
+          </p>
           <div id="map"></div>
           <div class="legend-row" id="map-legend"></div>
         </article>
 
         <aside class="side-stack">
           <article class="panel">
-            <p class="eyebrow">Comparaison</p>
+            <div class="panel-head panel-head-compact">
+              <div>
+                <p class="eyebrow">Comparaison</p>
+                <h2>Comparer deux zones</h2>
+              </div>
+              <p class="panel-kicker">
+                Gardez un seul comparateur puis basculez de l'arrondissement au quartier.
+              </p>
+            </div>
+            <section class="compare-zone-picker">
+              <div class="compare-zone-head">
+                <span class="control-step">2</span>
+                <div>
+                  <p class="eyebrow">Zones A et B</p>
+                  <h3>Choisir les arrondissements</h3>
+                </div>
+              </div>
+              <div class="control-bar control-bar--compare compare-arrondissement-controls">
+                <label>
+                  <span>Arrondissement A</span>
+                  <select id="left-select"></select>
+                </label>
+                <label>
+                  <span>Arrondissement B</span>
+                  <select id="right-select"></select>
+                </label>
+              </div>
+              <p class="control-context control-context--compare" id="comparison-summary"></p>
+            </section>
             <div id="compare-panel"></div>
           </article>
         </aside>
@@ -106,8 +175,8 @@
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Timeline</p>
-              <h2 id="timeline-title">Evolution de l'arrondissement</h2>
+              <p class="eyebrow">Suivi</p>
+              <h2 id="timeline-title">Evolution de l'arrondissement A</h2>
             </div>
           </div>
           <div class="chart-grid">
@@ -129,9 +198,13 @@
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Lecture par arrondissement</p>
-              <h2>Vue synthetique des 20 arrondissements</h2>
+              <p class="eyebrow">Panorama</p>
+              <h2>Les 20 arrondissements en un coup d'oeil</h2>
             </div>
+            <p class="panel-kicker">
+              Un classement rapide pour reperer les contrastes de prix, revenus, logement
+              social et qualite de vie.
+            </p>
           </div>
           <div class="ranking-grid" id="ranking-grid"></div>
         </article>
@@ -151,6 +224,6 @@
     </div>
 
     <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
-    <script src="/static/app.js?v=20260429-ui5" defer></script>
+    <script src="/static/app.js?v=20260429-ui7" defer></script>
   </body>
 </html>
