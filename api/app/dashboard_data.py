@@ -26,6 +26,10 @@ EXTRA_METRIC_CATALOG = {
     "median_rooms": {"label": "Pieces medianes", "unit": "pieces", "supports_year": True},
     "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
     "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
+    "environmental_pressure_index": {"label": "Pression environnementale", "unit": "/100", "supports_year": False},
+    "high_noise_share_pct": {"label": "Part de forte exposition au bruit", "unit": "%", "supports_year": False},
+    "noise_score": {"label": "Score bruit", "unit": "class", "supports_year": False},
+    "air_score": {"label": "Score air", "unit": "class", "supports_year": False},
 }
 METRIC_CATALOG_OVERRIDES = {
     "social_units_financed": {"supports_year": False},
@@ -233,6 +237,7 @@ def metadata() -> dict[str, object]:
         "available_sales_years": payload["available_sales_years"],
         "available_social_years": payload["available_social_years"],
         "available_rent_years": payload["available_rent_years"],
+        "spatial_sales_coverage": payload.get("spatial_sales_coverage", {}),
         "metrics": metrics,
         "map_levels": [
             {

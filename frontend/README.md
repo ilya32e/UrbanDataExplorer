@@ -45,3 +45,5 @@ docker compose up --build -d api
 - `GET /api/quartiers/compare`
 - `GET /api/map`
 - `GET /api/reference/{level}`
+
+`/api/meta` fournit aussi `spatial_sales_coverage`, utilise comme metadonnee de qualite pour documenter la couverture geographique du build.

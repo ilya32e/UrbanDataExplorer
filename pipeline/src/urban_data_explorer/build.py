@@ -501,19 +501,36 @@ def build_sales_spatial_outputs(
     sales_street_yearly = build_street_sales_metrics(geocoded)
     sales_building_yearly = build_building_sales_metrics(geocoded)
 
+    input_rows = int(len(geocoded))
+    denominator = input_rows or 1
+    adresses_ban_rows = int(geocoded["geocode_source"].eq("adresses-ban").sum())
+    ban_plus_rows = int(geocoded["geocode_source"].eq("ban-plus").sum())
+    geocoded_rows = int(geocoded["longitude"].notna().sum())
+    quartier_rows = int(geocoded["quartier_id"].notna().sum())
+    iris_rows = int(geocoded["iris_code"].notna().sum())
+    street_rows = int(geocoded["street_key"].notna().sum())
+    building_rows = int(geocoded["building_id"].notna().sum())
     coverage = {
-        "input_rows": int(len(geocoded)),
+        "input_rows": input_rows,
         "input_transactions": int(geocoded["transaction_id"].nunique()),
-        "adresses_ban_rows": int(geocoded["geocode_source"].eq("adresses-ban").sum()),
-        "ban_plus_rows": int(geocoded["geocode_source"].eq("ban-plus").sum()),
-        "geocoded_rows": int(geocoded["longitude"].notna().sum()),
-        "quartier_rows": int(geocoded["quartier_id"].notna().sum()),
-        "iris_rows": int(geocoded["iris_code"].notna().sum()),
+        "adresses_ban_rows": adresses_ban_rows,
+        "ban_plus_rows": ban_plus_rows,
+        "geocoded_rows": geocoded_rows,
+        "quartier_rows": quartier_rows,
+        "iris_rows": iris_rows,
+        "street_rows": street_rows,
+        "building_rows": building_rows,
         "street_count": int(sales_street_yearly["street_key"].nunique()) if not sales_street_yearly.empty else 0,
         "street_year_rows": int(len(sales_street_yearly)),
         "building_count": int(sales_building_yearly["building_id"].nunique()) if not sales_building_yearly.empty else 0,
         "building_year_rows": int(len(sales_building_yearly)),
-        "geocoded_rate_pct": round(float(geocoded["longitude"].notna().mean() * 100.0), 2),
+        "adresses_ban_rate_pct": round(adresses_ban_rows / denominator * 100.0, 2),
+        "ban_plus_rate_pct": round(ban_plus_rows / denominator * 100.0, 2),
+        "geocoded_rate_pct": round(geocoded_rows / denominator * 100.0, 2),
+        "quartier_rate_pct": round(quartier_rows / denominator * 100.0, 2),
+        "iris_rate_pct": round(iris_rows / denominator * 100.0, 2),
+        "street_rate_pct": round(street_rows / denominator * 100.0, 2),
+        "building_rate_pct": round(building_rows / denominator * 100.0, 2),
     }
 
     geocoded_columns = [
@@ -1281,6 +1298,10 @@ def metric_catalog() -> dict[str, dict[str, object]]:
         "months_income_for_1sqm": {"label": "Mois de revenu pour 1 m²", "unit": "months", "supports_year": False},
         "estimated_50m2_rent_effort_pct": {"label": "Effort locatif estime pour 50 m²", "unit": "%", "supports_year": False},
         "quality_of_life_score": {"label": "Qualite de vie", "unit": "/10", "supports_year": False},
+        "environmental_pressure_index": {"label": "Pression environnementale", "unit": "/100", "supports_year": False},
+        "high_noise_share_pct": {"label": "Part de forte exposition au bruit", "unit": "%", "supports_year": False},
+        "noise_score": {"label": "Score bruit", "unit": "class", "supports_year": False},
+        "air_score": {"label": "Score air", "unit": "class", "supports_year": False},
     }
 
 

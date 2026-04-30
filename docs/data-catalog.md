@@ -173,6 +173,10 @@ Le dashboard expose les indicateurs suivants. Leur calcul repose sur les artefac
 | `months_income_for_1sqm` | `median_price_m2 / (median_income_eur / 12)` | DVF + INSEE Filosofi |
 | `estimated_50m2_rent_effort_pct` | `reference_rent_majorated_eur_m2 * 50 / (median_income_eur / 12) * 100` | Loyers + INSEE Filosofi |
 | `quality_of_life_score` | score composite sur 10 construit a partir du bruit, de l'air et de la pression environnementale | Bruitparif |
+| `environmental_pressure_index` | indice sur 100 combinant pression bruit et air avant inversion en score de qualite de vie | Bruitparif |
+| `high_noise_share_pct` | part de surface exposee a la classe de bruit la plus elevee | Bruitparif |
+| `noise_score` | score moyen de classe bruit pondere par surface | Bruitparif |
+| `air_score` | score moyen de classe air pondere par surface | Bruitparif |
 
 Remarque:
 
@@ -216,7 +220,7 @@ Aggregation retenue:
 
 ## Qualite de vie
 
-Le dashboard n'expose plus separement `noise_score`, `air_score`, `high_noise_share_pct` et `environmental_pressure_index`. Ces composantes sont consolidees dans un seul indicateur:
+Le dashboard expose `quality_of_life_score` comme indicateur principal et conserve les composantes suivantes pour audit et cartographie avancee:
 
 Composantes intermediaires:
 
@@ -257,7 +261,20 @@ Pourquoi ce choix:
 
 - simplifier la lecture pour l'utilisateur final
 - garder une methode explicable pendant la presentation
-- eviter un dashboard surcharge par plusieurs metriques tres techniques
+- permettre une lecture detaillee quand l'utilisateur veut auditer le score
+
+## Couverture spatiale
+
+Le build produit aussi `gold_sales_spatial_coverage`, expose dans `/api/meta` via `spatial_sales_coverage`.
+
+Indicateurs principaux:
+
+- `input_rows` et `input_transactions`: volume DVF retenu apres filtrage
+- `geocoded_rows` et `geocoded_rate_pct`: couverture geographique globale
+- `adresses_ban_rate_pct` et `ban_plus_rate_pct`: repartition des sources de geocodage
+- `quartier_rate_pct` et `iris_rate_pct`: taux de rattachement aux mailles polygonales
+- `street_rate_pct` et `building_rate_pct`: taux de rattachement aux mailles micro-geographiques
+- `street_count` et `building_count`: nombre de rues et batiments proxy presents dans les sorties fines
 
 ## Remarques finales
 

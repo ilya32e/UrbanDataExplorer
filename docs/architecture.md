@@ -45,6 +45,7 @@ Principaux fichiers:
 - `pipeline/run_imports.py`
 - `pipeline/src/urban_data_explorer/cli.py`
 - `pipeline/src/urban_data_explorer/build.py`
+- `pipeline/src/urban_data_explorer/validation.py`
 - `pipeline/src/urban_data_explorer/ingestion/downloader.py`
 
 ### 2. Stockage par zones, SQL et NoSQL
@@ -98,6 +99,14 @@ Stack:
 - `JavaScript`
 - `MapLibre GL`
 - interface servie directement par `FastAPI`
+
+### 5. Validation et planification
+
+Responsabilite:
+
+- `python pipeline/run_imports.py validate` controle la presence des tables `Gold`, des colonnes attendues et des documents MongoDB
+- `python pipeline/run_imports.py run` orchestre `download`, `build` et `validate` pour les executions planifiees
+- `python -m unittest discover -s tests` couvre les fonctions de calcul, le CLI et les helpers de validation
 
 ## Organisation du depot
 
@@ -161,7 +170,7 @@ Le viewer Markdown de certains environnements affiche mal `erDiagram`, donc la v
 | `rents_yearly` | `arrondissement`, `year` | `reference_rent_majorated_eur_m2` |
 | `social_yearly` | `arrondissement`, `year` | `social_units_financed` |
 | `noise_arrondissement` | `arrondissement` | `noise_score`, `air_score`, `high_noise_share_pct` |
-| `arrondissement_summary` | `arrondissement` | `median_price_m2`, `median_income_eur`, `reference_rent_majorated_eur_m2`, `quality_of_life_score` |
+| `arrondissement_summary` | `arrondissement` | `median_price_m2`, `median_income_eur`, `reference_rent_majorated_eur_m2`, `quality_of_life_score`, `environmental_pressure_index` |
 
 ## Niveaux geographiques servis
 

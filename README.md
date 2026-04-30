@@ -160,6 +160,14 @@ Option utile pour un build plus rapide si vous ne voulez pas recalculer Bruitpar
 python pipeline/run_imports.py build --skip-noise
 ```
 
+Pour une execution complete et planifiable:
+
+```powershell
+python pipeline/run_imports.py run
+```
+
+Cette commande enchaine `download`, `build` et `validate`. Elle accepte aussi `--skip-download`, `--skip-build`, `--skip-validate`, `--force-download` et `--skip-noise`.
+
 ### 4. Lancer l'application
 
 ```powershell
@@ -187,6 +195,8 @@ Ouvrez ensuite `http://127.0.0.1:8000`.
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8000/health
 Invoke-RestMethod http://127.0.0.1:8000/api/meta
+python pipeline/run_imports.py validate
+python -m unittest discover -s tests
 ```
 
 Si vous utilisez Docker, vous pouvez aussi verifier l'etat des services:
@@ -324,6 +334,10 @@ Exemples de metriques disponibles dans le dashboard:
 - `months_income_for_1sqm`
 - `estimated_50m2_rent_effort_pct`
 - `quality_of_life_score`
+- `environmental_pressure_index`
+- `high_noise_share_pct`
+- `noise_score`
+- `air_score`
 
 Pour le detail des formules et du sens de chaque indicateur, voir [`docs/data-catalog.md`](docs/data-catalog.md).
 
@@ -354,9 +368,7 @@ Le projet est aujourd'hui structure comme un prototype data solide, local-first 
 - separation claire entre `MySQL` pour le tabulaire et `MongoDB` pour les documents
 - couches `Gold` reconstruisibles localement a partir des sources `Bronze`
 - architecture simple pour ajouter de nouvelles sources ou de nouvelles mailles cartographiques
-
-Les prochaines evolutions naturelles seraient:
-
-- industrialiser les tests et la validation des builds
-- packager le pipeline pour des executions planifiees
-- enrichir encore les metriques de qualite de vie et de couverture spatiale
+- commande `validate` pour controler les sorties `Gold` apres build
+- commande `run` pour enchainer `download`, `build` et `validate` dans une execution planifiee
+- tests unitaires lancables avec `python -m unittest discover -s tests`
+- metriques de qualite de vie enrichies et couverture spatiale exposee dans les metadonnees API

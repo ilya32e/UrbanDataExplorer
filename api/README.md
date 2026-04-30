@@ -49,6 +49,8 @@ Invoke-RestMethod http://127.0.0.1:8000/api/meta
 
 ## Metriques cartographiques
 
+`GET /api/meta` retourne aussi `spatial_sales_coverage`, qui resume le volume d'entrees, le taux de geocodage et les taux de rattachement quartier, IRIS, rue et batiment proxy.
+
 Les niveaux `quartier`, `street` et `building` exposent toutes les metriques de vente disponibles a leur maille:
 
 - `median_price_m2`
@@ -60,3 +62,11 @@ Les niveaux `quartier`, `street` et `building` exposent toutes les metriques de 
 - `house_share_pct`
 
 Le selecteur d'annee pilote les metriques issues des ventes. Les indicateurs de contexte par arrondissement, comme revenu, loyer, logement social et qualite de vie, utilisent les derniers millesimes agreges disponibles dans la table de synthese.
+
+Les composantes environnementales suivantes sont disponibles au niveau arrondissement:
+
+- `quality_of_life_score`
+- `environmental_pressure_index`
+- `high_noise_share_pct`
+- `noise_score`
+- `air_score`
