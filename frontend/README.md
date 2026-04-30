@@ -2,6 +2,13 @@
 
 Frontend statique en JavaScript servi directement par FastAPI.
 
+## Experience utilisateur
+
+- un panneau haut pour choisir la vue cartographique: metrique, niveau et annee
+- un panneau de comparaison unique pour choisir `Arrondissement A` et `Arrondissement B`
+- un switch dans le comparateur pour basculer entre comparaison `arrondissement` et `quartier`
+- des listes de quartiers qui suivent automatiquement les arrondissements selectionnes
+
 ## Stack
 
 - HTML / CSS / JavaScript natifs
@@ -33,5 +40,7 @@ docker compose up --build -d api
 - `GET /api/overview`
 - `GET /api/timeline`
 - `GET /api/compare`
+- `GET /api/quartiers`
+- `GET /api/quartiers/compare`
 - `GET /api/map`
 - `GET /api/reference/{level}`

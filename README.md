@@ -38,7 +38,8 @@ Le marche du logement parisien est documente par une multitude de jeux de donnee
 - Pipeline data reproductible avec zones `Bronze`, `Silver` et `Gold`
 - Croisement de plusieurs sources publiques: DVF, INSEE Filosofi, Paris Data, Bruitparif, BAN
 - Cartographie multi-niveaux: `arrondissement`, `quartier`, `street`, `building`
-- Vue de synthese ville + comparaison de deux arrondissements + timeline locale
+- Vue de synthese ville + comparateur unique `arrondissement` / `quartier` + timeline locale
+- Parcours de lecture guide: choix de la vue cartographique, puis comparaison des zones A et B dans le meme panneau
 - Geocodage des ventes via `adresses-ban` avec fallback `BAN Plus`
 - API REST simple lisant les tables `Gold` dans `MySQL` et les documents `GeoJSON/JSON` dans `MongoDB`
 - Frontend statique servi par FastAPI, donc zero bundle complexe a maintenir
@@ -300,6 +301,8 @@ L'API lit directement `MySQL` pour les donnees tabulaires et `MongoDB` pour les 
 | `GET /api/overview?sales_year=2025` | synthese ville + donnees des arrondissements |
 | `GET /api/timeline?arrondissement=11` | chronologie ventes / loyers / logement social |
 | `GET /api/compare?left=11&right=18&sales_year=2025` | comparaison de deux arrondissements |
+| `GET /api/quartiers?sales_year=2025` | liste des quartiers disponibles pour la comparaison fine |
+| `GET /api/quartiers/compare?left=7510101&right=7510102&sales_year=2025` | comparaison de deux quartiers |
 | `GET /api/map?metric=median_price_m2&level=arrondissement&year=2025` | couche cartographique pour une metrique |
 | `GET /api/reference/quartier` | geometries de reference pour certains niveaux fins |
 
@@ -309,7 +312,11 @@ Exemples de metriques disponibles dans le dashboard:
 
 - `median_price_m2`
 - `transactions`
+- `median_sale_value_eur`
 - `median_surface_m2`
+- `median_rooms`
+- `apartment_share_pct`
+- `house_share_pct`
 - `median_income_eur`
 - `reference_rent_majorated_eur_m2`
 - `social_units_financed`

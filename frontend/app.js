@@ -20,11 +20,19 @@ const state = {
   compareMode: "arrondissement",
 };
 
+const SALES_MAP_METRICS = [
+  "median_price_m2",
+  "transactions",
+  "median_sale_value_eur",
+  "median_surface_m2",
+  "median_rooms",
+  "apartment_share_pct",
+  "house_share_pct",
+];
+
 const MAP_METRIC_PREFERENCES = {
   arrondissement: [
-    "median_price_m2",
-    "transactions",
-    "median_surface_m2",
+    ...SALES_MAP_METRICS,
     "months_income_for_1sqm",
     "median_income_eur",
     "reference_rent_majorated_eur_m2",
@@ -32,9 +40,9 @@ const MAP_METRIC_PREFERENCES = {
     "social_units_financed_5y",
     "quality_of_life_score",
   ],
-  quartier: ["median_price_m2", "transactions", "median_surface_m2"],
-  street: ["median_price_m2", "transactions", "median_surface_m2"],
-  building: ["median_price_m2", "transactions", "median_surface_m2"],
+  quartier: SALES_MAP_METRICS,
+  street: SALES_MAP_METRICS,
+  building: SALES_MAP_METRICS,
 };
 const POINT_MAP_LEVELS = new Set(["building"]);
 
@@ -232,17 +240,16 @@ function populateMetricSelect() {
   const select = document.getElementById("metric-select");
   select.innerHTML = "";
   const supported = supportedMetricsForLevel();
+  const allSupported = Object.keys(state.meta.metrics).filter((key) => supported.has(key));
   const preferred = (MAP_METRIC_PREFERENCES[state.mapLevel] ?? []).filter(
     (key) => supported.has(key) && state.meta.metrics[key],
   );
-  const metricKeys = preferred.length
-    ? preferred
-    : Object.keys(state.meta.metrics).filter((key) => supported.has(key));
+  const metricKeys = [...preferred, ...allSupported.filter((key) => !preferred.includes(key))];
 
   metricKeys.forEach((key) => {
     const option = document.createElement("option");
     option.value = key;
-    option.textContent = state.meta.metrics[key].label;
+    option.textContent = state.meta.metrics[key]?.label ?? safeMetricLabel(key);
     select.append(option);
   });
   if (!metricKeys.includes(state.metric)) {

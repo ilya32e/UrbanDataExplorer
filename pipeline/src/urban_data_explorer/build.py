@@ -1269,7 +1269,11 @@ def metric_catalog() -> dict[str, dict[str, object]]:
     return {
         "median_price_m2": {"label": "Prix median au m²", "unit": "EUR/m²", "supports_year": True},
         "transactions": {"label": "Transactions retenues", "unit": "count", "supports_year": True},
+        "median_sale_value_eur": {"label": "Valeur mediane de vente", "unit": "EUR", "supports_year": True},
         "median_surface_m2": {"label": "Surface mediane", "unit": "m²", "supports_year": True},
+        "median_rooms": {"label": "Pieces medianes", "unit": "rooms", "supports_year": True},
+        "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
+        "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
         "median_income_eur": {"label": "Revenu median", "unit": "EUR/an", "supports_year": False},
         "reference_rent_majorated_eur_m2": {"label": "Loyer majore moyen", "unit": "EUR/m²", "supports_year": False},
         "social_units_financed": {"label": "Logements sociaux finances", "unit": "count", "supports_year": True},

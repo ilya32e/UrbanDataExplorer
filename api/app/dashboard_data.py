@@ -9,9 +9,24 @@ import pandas as pd
 from common.database import TABULAR_DATASETS, read_table_dataset, table_exists
 from common.document_store import BLOB_DATASETS, blob_exists, read_blob_dataset
 
-QUARTIER_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
-STREET_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
-BUILDING_MAP_METRICS = ("median_price_m2", "transactions", "median_surface_m2")
+SPATIAL_SALES_MAP_METRICS = (
+    "median_price_m2",
+    "transactions",
+    "median_sale_value_eur",
+    "median_surface_m2",
+    "median_rooms",
+    "apartment_share_pct",
+    "house_share_pct",
+)
+QUARTIER_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
+STREET_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
+BUILDING_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
+EXTRA_METRIC_CATALOG = {
+    "median_sale_value_eur": {"label": "Valeur mediane de vente", "unit": "EUR", "supports_year": True},
+    "median_rooms": {"label": "Pieces medianes", "unit": "rooms", "supports_year": True},
+    "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
+    "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
+}
 MAP_LEVEL_LABELS = {
     "arrondissement": "Arrondissements",
     "quartier": "Quartiers",
@@ -187,7 +202,10 @@ def load_quartier_geojson() -> dict[str, object]:
 
 def metric_catalog() -> dict[str, dict[str, object]]:
     payload = load_dashboard_payload()
-    return payload["metrics"]
+    metrics = dict(payload["metrics"])
+    for key, definition in EXTRA_METRIC_CATALOG.items():
+        metrics.setdefault(key, definition)
+    return metrics
 
 
 def reference_geojson(level: str) -> dict[str, object]:
@@ -200,6 +218,7 @@ def reference_geojson(level: str) -> dict[str, object]:
 
 def metadata() -> dict[str, object]:
     payload = load_dashboard_payload()
+    metrics = metric_catalog()
     return {
         "generated_at": payload["generated_at"],
         "latest_sales_year": payload["latest_sales_year"],
@@ -208,12 +227,12 @@ def metadata() -> dict[str, object]:
         "available_sales_years": payload["available_sales_years"],
         "available_social_years": payload["available_social_years"],
         "available_rent_years": payload["available_rent_years"],
-        "metrics": payload["metrics"],
+        "metrics": metrics,
         "map_levels": [
             {
                 "key": "arrondissement",
                 "label": "Arrondissements",
-                "supported_metrics": list(payload["metrics"].keys()),
+                "supported_metrics": list(metrics.keys()),
             },
             {
                 "key": "quartier",

@@ -78,6 +78,8 @@ Principaux endpoints:
 - `GET /api/overview`
 - `GET /api/timeline`
 - `GET /api/compare`
+- `GET /api/quartiers`
+- `GET /api/quartiers/compare`
 - `GET /api/map`
 - `GET /api/reference/{level}`
 
@@ -86,7 +88,7 @@ Principaux endpoints:
 Responsabilite:
 
 - recuperer les donnees via l'API
-- afficher la carte principale, les KPIs, la comparaison et la timeline
+- afficher la carte principale, les KPIs, un comparateur unique `arrondissement` / `quartier` et la timeline
 - permettre une lecture multi-niveaux: `arrondissement`, `quartier`, `street`, `building`
 
 Stack:

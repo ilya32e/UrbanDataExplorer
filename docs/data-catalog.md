@@ -155,13 +155,17 @@ Limites:
 
 ## Indicateurs exposes et mode de calcul
 
-Le dashboard expose 10 indicateurs principaux. Leur calcul repose sur les artefacts `Gold` produits par le pipeline.
+Le dashboard expose les indicateurs suivants. Leur calcul repose sur les artefacts `Gold` produits par le pipeline.
 
 | Indicateur | Mode de calcul | Source principale |
 | --- | --- | --- |
 | `median_price_m2` | mediane de `valeur fonciere / surface batie` apres filtrage des ventes DVF et regroupement par maille / annee | DVF |
 | `transactions` | nombre de `transaction_id` uniques retenus dans le groupe | DVF |
+| `median_sale_value_eur` | mediane de `valeur fonciere` dans le groupe | DVF |
 | `median_surface_m2` | mediane de `surface batie` dans le groupe | DVF |
+| `median_rooms` | mediane du nombre de pieces principales dans le groupe | DVF |
+| `apartment_share_pct` | part des ventes de type appartement dans le groupe | DVF |
+| `house_share_pct` | part des ventes de type maison dans le groupe | DVF |
 | `median_income_eur` | mediane de `DEC_MED21` sur les IRIS rattaches a l'arrondissement | INSEE Filosofi |
 | `reference_rent_majorated_eur_m2` | moyenne des loyers de reference majores des quartiers appartenant a l'arrondissement, par annee | Encadrement des loyers |
 | `social_units_financed` | somme annuelle des logements sociaux finances dans l'arrondissement | Logements sociaux finances |
@@ -172,9 +176,9 @@ Le dashboard expose 10 indicateurs principaux. Leur calcul repose sur les artefa
 
 Remarque:
 
-- les vues `quartier`, `street` et `building` n'exposent pas tous ces indicateurs
-- a ces niveaux cartographiques fins, seules `median_price_m2`, `transactions` et `median_surface_m2` sont servies sur la carte
-- le dashboard principal par arrondissement est la vue qui consolide les 10 indicateurs
+- les vues `quartier`, `street` et `building` exposent les metriques de vente disponibles a leur maille
+- a ces niveaux cartographiques fins: `median_price_m2`, `transactions`, `median_sale_value_eur`, `median_surface_m2`, `median_rooms`, `apartment_share_pct` et `house_share_pct` sont servies sur la carte
+- le dashboard principal par arrondissement reste la vue qui consolide aussi les indicateurs revenu, loyer, logement social et qualite de vie
 
 ## Detail des calculs derives
 
