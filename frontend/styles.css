@@ -139,7 +139,7 @@ p {
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.78fr);
+  grid-template-columns: 1fr;
   gap: 22px;
   align-items: stretch;
   padding: 34px;
@@ -177,14 +177,12 @@ p {
   background: radial-gradient(circle, rgba(191, 141, 54, 0.14), transparent 72%);
 }
 
-.hero-copy-block,
-.hero-guide {
+.hero-copy-block {
   position: relative;
   z-index: 1;
 }
 
 h1,
-.hero-guide h2,
 .panel h2,
 .chart-card h3 {
   font-family: var(--font-display);
@@ -200,112 +198,6 @@ h1 {
 .hero-accent {
   color: var(--terracotta);
   font-style: italic;
-}
-
-.hero-copy {
-  margin-top: 20px;
-  max-width: 760px;
-  font-size: 1.07rem;
-  line-height: 1.72;
-  color: var(--muted);
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.hero-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(32, 25, 19, 0.08);
-  color: var(--muted-strong);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  box-shadow: var(--shadow-sm);
-}
-
-.hero-guide {
-  align-self: end;
-  display: grid;
-  gap: 14px;
-  padding: 24px;
-  border-radius: 30px;
-  background:
-    linear-gradient(160deg, rgba(31, 51, 45, 0.92), rgba(45, 105, 113, 0.86)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), var(--shadow-lg);
-  color: #f5f0e8;
-}
-
-.hero-guide .eyebrow {
-  color: rgba(255, 238, 216, 0.78);
-}
-
-.hero-guide h2 {
-  font-size: 1.6rem;
-  line-height: 1.08;
-  letter-spacing: -0.04em;
-}
-
-.hero-guide-copy {
-  color: rgba(245, 240, 232, 0.78);
-  line-height: 1.62;
-  font-size: 0.96rem;
-}
-
-.hero-step-list {
-  display: grid;
-  gap: 12px;
-}
-
-.hero-step-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
-  align-items: start;
-  padding: 14px 16px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.hero-step-index {
-  display: inline-flex;
-  width: 30px;
-  height: 30px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: rgba(255, 248, 236, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #fff4e6;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.hero-step-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.hero-step-copy strong {
-  display: block;
-  line-height: 1.32;
-  font-size: 0.98rem;
-}
-
-.hero-step-copy span {
-  color: rgba(245, 240, 232, 0.72);
-  line-height: 1.45;
-  font-size: 0.88rem;
 }
 
 .panel,
@@ -356,12 +248,6 @@ h1 {
   color: var(--muted);
   line-height: 1.6;
   font-size: 0.95rem;
-}
-
-.control-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 16px;
 }
 
 .control-group {
@@ -1059,7 +945,6 @@ select:focus-visible {
 
 @media (max-width: 1120px) {
   .hero,
-  .control-layout,
   .main-grid,
   .chart-grid {
     grid-template-columns: 1fr;
@@ -1101,11 +986,6 @@ select:focus-visible {
 
   .hero {
     padding: 24px 20px;
-  }
-
-  .hero-guide {
-    padding: 18px;
-    border-radius: 22px;
   }
 
   h1 {

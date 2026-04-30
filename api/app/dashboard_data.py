@@ -23,9 +23,12 @@ STREET_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
 BUILDING_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
 EXTRA_METRIC_CATALOG = {
     "median_sale_value_eur": {"label": "Valeur mediane de vente", "unit": "EUR", "supports_year": True},
-    "median_rooms": {"label": "Pieces medianes", "unit": "rooms", "supports_year": True},
+    "median_rooms": {"label": "Pieces medianes", "unit": "pieces", "supports_year": True},
     "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
     "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
+}
+METRIC_CATALOG_OVERRIDES = {
+    "social_units_financed": {"supports_year": False},
 }
 MAP_LEVEL_LABELS = {
     "arrondissement": "Arrondissements",
@@ -202,9 +205,12 @@ def load_quartier_geojson() -> dict[str, object]:
 
 def metric_catalog() -> dict[str, dict[str, object]]:
     payload = load_dashboard_payload()
-    metrics = dict(payload["metrics"])
+    metrics = {key: dict(definition) for key, definition in payload["metrics"].items()}
     for key, definition in EXTRA_METRIC_CATALOG.items():
         metrics.setdefault(key, definition)
+    for key, definition in METRIC_CATALOG_OVERRIDES.items():
+        if key in metrics:
+            metrics[key].update(definition)
     return metrics
 
 

@@ -41,6 +41,22 @@ Invoke-RestMethod http://127.0.0.1:8000/api/meta
 - `GET /api/overview?sales_year=2025`
 - `GET /api/timeline?arrondissement=11`
 - `GET /api/compare?left=11&right=18&sales_year=2025`
+- `GET /api/quartiers?sales_year=2025`
+- `GET /api/quartiers/compare?left=7510101&right=7510102&sales_year=2025`
 - `GET /api/map?metric=median_price_m2&level=arrondissement&year=2025`
 - `GET /api/reference/quartier`
 - `GET /`
+
+## Metriques cartographiques
+
+Les niveaux `quartier`, `street` et `building` exposent toutes les metriques de vente disponibles a leur maille:
+
+- `median_price_m2`
+- `transactions`
+- `median_sale_value_eur`
+- `median_surface_m2`
+- `median_rooms`
+- `apartment_share_pct`
+- `house_share_pct`
+
+Le selecteur d'annee pilote les metriques issues des ventes. Les indicateurs de contexte par arrondissement, comme revenu, loyer, logement social et qualite de vie, utilisent les derniers millesimes agreges disponibles dans la table de synthese.

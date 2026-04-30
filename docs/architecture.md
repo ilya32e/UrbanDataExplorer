@@ -156,7 +156,7 @@ Le viewer Markdown de certains environnements affiche mal `erDiagram`, donc la v
 
 | Jeu de donnees | Cle logique | Champs utiles |
 | --- | --- | --- |
-| `sales_yearly` | `arrondissement`, `year` | `median_price_m2`, `transactions`, `median_surface_m2` |
+| `sales_yearly` | `arrondissement`, `year` | `median_price_m2`, `transactions`, `median_sale_value_eur`, `median_surface_m2`, `median_rooms`, `apartment_share_pct`, `house_share_pct` |
 | `income_arrondissement` | `arrondissement` | `median_income_eur`, `poverty_rate_pct` |
 | `rents_yearly` | `arrondissement`, `year` | `reference_rent_majorated_eur_m2` |
 | `social_yearly` | `arrondissement`, `year` | `social_units_financed` |
@@ -172,6 +172,8 @@ Le viewer Markdown de certains environnements affiche mal `erDiagram`, donc la v
 | `street` | lecture lineaire des voies | `gold_sales_street_yearly`, `gold_streets_geojson` |
 | `building` | proxy d'adresse / batiment | `gold_sales_building_yearly`, `gold_sales_geocoded` |
 | `IRIS` | enrichissements statistiques fins | `gold_sales_iris_yearly`, `gold_iris_geojson` |
+
+Les niveaux `quartier`, `street` et `building` exposent sur la carte les metriques de vente disponibles a leur maille. Les indicateurs de contexte consolides, comme revenu, loyer, logement social et qualite de vie, restent servis au niveau `arrondissement`.
 
 ## Choix d'architecture
 

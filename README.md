@@ -39,7 +39,7 @@ Le marche du logement parisien est documente par une multitude de jeux de donnee
 - Croisement de plusieurs sources publiques: DVF, INSEE Filosofi, Paris Data, Bruitparif, BAN
 - Cartographie multi-niveaux: `arrondissement`, `quartier`, `street`, `building`
 - Vue de synthese ville + comparateur unique `arrondissement` / `quartier` + timeline locale
-- Parcours de lecture guide: choix de la vue cartographique, puis comparaison des zones A et B dans le meme panneau
+- Interface allegee centree sur la carte, les KPIs, les comparaisons et les tendances
 - Geocodage des ventes via `adresses-ban` avec fallback `BAN Plus`
 - API REST simple lisant les tables `Gold` dans `MySQL` et les documents `GeoJSON/JSON` dans `MongoDB`
 - Frontend statique servi par FastAPI, donc zero bundle complexe a maintenir

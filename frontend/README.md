@@ -8,6 +8,7 @@ Frontend statique en JavaScript servi directement par FastAPI.
 - un panneau de comparaison unique pour choisir `Arrondissement A` et `Arrondissement B`
 - un switch dans le comparateur pour basculer entre comparaison `arrondissement` et `quartier`
 - des listes de quartiers qui suivent automatiquement les arrondissements selectionnes
+- une interface epuree, sans blocs d'aide longs dans les panneaux principaux
 
 ## Stack
 

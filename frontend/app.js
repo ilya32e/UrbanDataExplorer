@@ -75,6 +75,9 @@ function formatMetricValue(metric, value) {
   if (metric.includes("_pct") || metric.includes("share")) {
     return `${decimal.format(numeric)} %`;
   }
+  if (metric === "median_rooms") {
+    return decimal.format(numeric);
+  }
   if (metric.includes("score") || metric.includes("index") || metric.includes("months")) {
     return decimal.format(numeric);
   }

@@ -179,6 +179,7 @@ Remarque:
 - les vues `quartier`, `street` et `building` exposent les metriques de vente disponibles a leur maille
 - a ces niveaux cartographiques fins: `median_price_m2`, `transactions`, `median_sale_value_eur`, `median_surface_m2`, `median_rooms`, `apartment_share_pct` et `house_share_pct` sont servies sur la carte
 - le dashboard principal par arrondissement reste la vue qui consolide aussi les indicateurs revenu, loyer, logement social et qualite de vie
+- le selecteur d'annee de la carte pilote les metriques de vente; les indicateurs de contexte par arrondissement s'appuient sur les derniers millesimes agreges disponibles
 
 ## Detail des calculs derives
 
