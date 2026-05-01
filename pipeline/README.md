@@ -4,6 +4,29 @@ Le pipeline gere l'ingestion des sources ouvertes et prepare les traitements Bro
 
 ## Commandes
 
+### Premier lancement depuis un clone Git
+
+Depuis la racine du depot, le script suivant prepare les bases Docker, telecharge les sources ouvertes, construit les sorties `Silver/Gold`, puis lance la validation:
+
+```powershell
+.\scripts\first-run.ps1
+```
+
+Si PowerShell bloque l'execution des scripts:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\first-run.ps1
+```
+
+Variantes utiles:
+
+```powershell
+.\scripts\first-run.ps1 -StartApi
+.\scripts\first-run.ps1 -ForceDownload
+.\scripts\first-run.ps1 -SkipNoise
+.\scripts\first-run.ps1 -Sources dvf_2025_paris bruitparif_sig_2024
+```
+
 ### En local
 
 ```powershell

@@ -81,6 +81,7 @@ UrbanDataExplorer/
 |- docs/                 # Documentation fonctionnelle et technique
 |- frontend/             # Interface HTML / CSS / JS servie par FastAPI
 |- pipeline/             # Ingestion, nettoyage et build des artefacts
+|- scripts/              # Scripts d'initialisation locale
 |- docker-compose.yml    # Stack locale mysql + mongo + api + pipeline
 `- README.md
 ```
@@ -89,11 +90,49 @@ UrbanDataExplorer/
 
 ### Prerequis
 
-- `Python 3.11+`
 - acces reseau pour telecharger les sources ouvertes
-- `Docker` recommande pour lancer `MySQL` et `MongoDB`
+- `Docker Desktop` pour le script de premier lancement
+- `Python 3.11+` seulement si vous lancez le pipeline hors Docker
 
-### Installation
+### Demarrage rapide apres un clone Git
+
+Pour une premiere installation locale, le plus simple est d'utiliser le script Docker fourni:
+
+```powershell
+git clone <url-du-repo>
+cd UrbanDataExplorer
+.\scripts\first-run.ps1
+```
+
+Si PowerShell bloque l'execution des scripts:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\first-run.ps1
+```
+
+Ce script:
+
+- copie `.env.example` vers `.env` si besoin
+- demarre `MySQL` et `MongoDB`
+- construit l'image Docker du pipeline
+- telecharge les datasets declares dans [`config/sources.yaml`](config/sources.yaml)
+- lance le traitement `Bronze -> Silver -> Gold`
+- valide les sorties chargees dans `MySQL` et `MongoDB`
+
+Pour telecharger et traiter les donnees puis lancer aussi l'API:
+
+```powershell
+.\scripts\first-run.ps1 -StartApi
+```
+
+Options utiles:
+
+- `-ForceDownload`: retelecharge les sources meme si elles existent deja localement
+- `-SkipNoise`: evite le calcul Bruitparif, plus long, et utilise des valeurs environnementales neutres
+- `-SkipValidate`: ignore la validation finale
+- `-Sources dvf_2025_paris bruitparif_sig_2024`: ne telecharge que certaines sources configurees
+
+### Installation manuelle
 
 ```powershell
 python -m venv .venv
