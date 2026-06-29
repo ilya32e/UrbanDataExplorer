@@ -36,29 +36,79 @@ Le marche du logement parisien est documente par une multitude de jeux de donnee
 ## Fonctionnalites
 
 - Pipeline data reproductible avec zones `Bronze`, `Silver` et `Gold`
+- Data lake fichier en **Parquet** (`data/silver/`, `data/gold/`) **partitionne par annee** (`year=YYYY/`)
+- Orchestration **Apache Airflow** (DAGs) en plus du CLI, voir [`docs/airflow.md`](docs/airflow.md)
 - Croisement de plusieurs sources publiques: DVF, INSEE Filosofi, Paris Data, Bruitparif, BAN
 - Cartographie multi-niveaux: `arrondissement`, `quartier`, `street`, `building`
 - Vue de synthese ville + comparateur unique `arrondissement` / `quartier` + timeline locale
+- Lecteur temporel anime qui rejoue annee par annee l'evolution de la carte et des indicateurs ville
 - Interface allegee centree sur la carte, les KPIs, les comparaisons et les tendances
 - Geocodage des ventes via `adresses-ban` avec fallback `BAN Plus`
-- API REST simple lisant les tables `Gold` dans `MySQL` et les documents `GeoJSON/JSON` dans `MongoDB`
+- API REST securisee par **JWT (OAuth2)** ou cle API, lisant `Gold` dans `MySQL` et `GeoJSON/JSON` dans `MongoDB`
+- Mesure de performance du pipeline (`reports/pipeline_metrics.csv`) et de l'API (`scripts/benchmark.py`)
 - Frontend statique servi par FastAPI, donc zero bundle complexe a maintenir
 - Environnement `Docker Compose` pour lancer rapidement `mysql`, `mongo`, `api` et le service `pipeline`
 
 ## Architecture
 
+Schema d'architecture global de bout en bout (sources -> orchestration -> ETL ->
+stockage -> exposition), avec les chemins batch et streaming.
+
 ```mermaid
-flowchart LR
-    A[Open data sources] --> B[Pipeline ingestion]
-    B --> C[data/bronze]
-    C --> D[Cleaning and enrichment]
-    D --> E[Silver tables in MySQL]
-    E --> F[Gold tables in MySQL]
-    E --> G[GeoJSON and JSON documents in MongoDB]
-    F --> H[FastAPI]
-    G --> H[FastAPI]
-    H --> I[REST API]
-    H --> J[Static frontend]
+flowchart TB
+    subgraph SRC["Sources open data"]
+        S1["DVF - transactions"]
+        S2["INSEE Filosofi - revenus"]
+        S3["Paris Data - loyers / social"]
+        S4["Bruitparif - air / bruit"]
+        S5["BAN - geocodage"]
+    end
+
+    subgraph ORC["Orchestration"]
+        CLI["CLI - run_imports.py"]
+        AF["Apache Airflow - DAGs"]
+    end
+
+    subgraph PIPE["Pipeline ETL - Bronze / Silver / Gold"]
+        B["Bronze - fichiers bruts"]
+        SI["Silver - nettoyage + geocodage"]
+        GO["Gold - agregats analytiques"]
+        DL[["Data lake Parquet - partitionne year=YYYY"]]
+    end
+
+    subgraph STREAM["Streaming temps reel"]
+        RS["Redis Streams - sales:events"]
+        KF["Apache Kafka - sales.events"]
+    end
+
+    subgraph STORE["Stockage"]
+        MY[("MySQL - tables Gold tabulaires")]
+        MO[("MongoDB - GeoJSON + metadata")]
+    end
+
+    subgraph SERVE["Exposition"]
+        API["FastAPI - JWT/OAuth2, rate-limit, /metrics"]
+        LB["nginx - load-balancer (api x N)"]
+        FE["Frontend - MapLibre GL"]
+    end
+
+    SRC --> CLI
+    SRC --> AF
+    CLI --> B
+    AF --> B
+    B --> SI --> GO
+    SI -. parquet .-> DL
+    GO -. parquet .-> DL
+    GO --> MY
+    GO --> MO
+    SI --> RS
+    SI --> KF
+    RS --> MY
+    KF --> MO
+    MY --> API
+    MO --> API
+    API --> LB --> FE
+    API --> FE
 ```
 
 ### Flux principal
@@ -354,6 +404,85 @@ L'API lit directement `MySQL` pour les donnees tabulaires et `MongoDB` pour les 
 | `GET /api/quartiers/compare?left=7510101&right=7510102&sales_year=2025` | comparaison de deux quartiers |
 | `GET /api/map?metric=median_price_m2&level=arrondissement&year=2025` | couche cartographique pour une metrique |
 | `GET /api/reference/quartier` | geometries de reference pour certains niveaux fins |
+
+### Securite, quotas et performance
+
+L'API integre une couche de securite et d'observabilite **opt-in** (local-first par defaut):
+
+- **JWT / OAuth2** (`Authorization: Bearer`): `POST /auth/token` echange un identifiant/mot de
+  passe (`AUTH_USERNAME` / `AUTH_PASSWORD`, signe avec `AUTH_SECRET_KEY`) contre un **JWT** signe
+  HS256. Le bouton `Authorize` de Swagger gere ce flux. Active des que `AUTH_SECRET_KEY`,
+  `AUTH_USERNAME` et `AUTH_PASSWORD` sont definis.
+- **Cle API** (`X-API-Key`): alternative service-a-service, conservee pour compat. Si `API_KEY`
+  est defini, les endpoints `/api/*` et `/sources` l'acceptent aussi.
+- Si **ni JWT ni cle API** ne sont configures, l'API reste ouverte (le dashboard fonctionne sans
+  configuration); `/health` et `/auth/token` restent toujours ouverts.
+- **Rate-limiting** par IP (`API_RATE_LIMIT` requetes par `API_RATE_WINDOW` secondes), renvoie
+  `429` au-dela du quota.
+- **Mesure du temps de traitement**: chaque reponse porte l'en-tete `X-Process-Time-ms`, et les
+  requetes plus lentes que `API_SLOW_REQUEST_MS` sont journalisees (signal de monitoring).
+
+Demo rapide JWT (OAuth2 password flow):
+
+```powershell
+$env:AUTH_SECRET_KEY="change-me-long-random-secret-32-bytes-min"
+$env:AUTH_USERNAME="admin"; $env:AUTH_PASSWORD="admin"
+docker compose up -d api
+Invoke-RestMethod http://127.0.0.1:8000/api/meta                                   # 401
+$tok = (Invoke-RestMethod http://127.0.0.1:8000/auth/token -Method Post -Body @{ username="admin"; password="admin" }).access_token
+Invoke-RestMethod http://127.0.0.1:8000/api/meta -Headers @{ Authorization = "Bearer $tok" }  # 200
+```
+
+Benchmark de performance, API en marche (latence p50/p95/p99 + SLA) **et** pipeline ETL:
+
+```powershell
+python scripts/benchmark.py --iterations 40 --sla-ms 300   # -> reports/benchmark.csv (API)
+python pipeline/run_imports.py build                        # -> reports/pipeline_metrics.csv (ETL)
+```
+
+Le rapport API est ecrit dans `reports/benchmark.csv`, le rapport pipeline (temps par etape +
+volumetrie) dans `reports/pipeline_metrics.csv`. La modelisation relationnelle (cles primaires,
+index, MCD/MLD/MPD) est documentee dans [`docs/data-model.md`](docs/data-model.md).
+
+### Streaming temps reel (Redis Streams)
+
+En complement du pipeline batch, un mode **streaming** publie les transactions comme evenements
+et les agrege en temps reel (broker `Redis Streams`, consumer group avec accuse `XACK`):
+
+```powershell
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-produce --count 2000 --reset
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-consume --max 2000
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-status
+```
+
+Le producteur (`XADD`) alimente le stream `sales:events`; le consommateur agrege par
+arrondissement (transactions, prix m2 moyen) dans `Redis`. Plusieurs consommateurs du meme groupe
+peuvent tourner en parallele pour repartir la charge (scalabilite horizontale).
+
+Une variante **Apache Kafka** est aussi fournie (broker KRaft, topic `sales.events` a 3 partitions,
+consumer group, agregats materialises dans `MongoDB`):
+
+```powershell
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-produce --count 2000
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-consume --max 2000
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-status
+```
+
+### Scalabilite, load-balancing et monitoring
+
+- **Monitoring**: `GET /metrics` expose les compteurs de l'instance (requetes, erreurs, latence
+  moyenne, requetes lentes, repartition par statut).
+- **Load-balancing**: une surcouche `docker-compose.lb.yml` ajoute un load-balancer `nginx` devant
+  plusieurs replicas de l'API.
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.lb.yml up -d --scale api=3 lb
+# Verifier la repartition (les noms d'instance alternent) :
+1..6 | ForEach-Object { (Invoke-RestMethod http://localhost:8080/metrics).instance }
+```
+
+- **Resilience**: `restart: unless-stopped` + `healthcheck` sur chaque service, `pool_pre_ping` et
+  `pool_recycle` cote MySQL (reconnexion auto apres coupure).
 
 ### Metriques exposees
 
