@@ -1,0 +1,19 @@
+[2026-06-28T10:15:32.066+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T10:15:32.120+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_adresses_ban manual__2026-06-28T09:54:33+00:00 [queued]>
+[2026-06-28T10:15:32.146+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_adresses_ban manual__2026-06-28T09:54:33+00:00 [queued]>
+[2026-06-28T10:15:32.149+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-28T10:15:32.202+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_adresses_ban> on 2026-06-28 09:54:33+00:00
+[2026-06-28T10:15:32.246+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_adresses_ban', 'manual__2026-06-28T09:54:33+00:00', '--job-id', '23', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpovnw4jpc']
+[2026-06-28T10:15:32.264+0000] {standard_task_runner.py:105} INFO - Job 23: Subtask download.download_adresses_ban
+[2026-06-28T10:15:32.264+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=1300) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T10:15:32.278+0000] {standard_task_runner.py:72} INFO - Started process 1308 to run task
+[2026-06-28T10:15:32.539+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_adresses_ban manual__2026-06-28T09:54:33+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T10:15:32.878+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_adresses_ban' AIRFLOW_CTX_EXECUTION_DATE='2026-06-28T09:54:33+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-06-28T09:54:33+00:00'
+[2026-06-28T10:15:32.886+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T10:15:35.480+0000] {logging_mixin.py:190} INFO - adresses_ban: /opt/***/project/data/bronze/reference/adresses-ban.csv
+[2026-06-28T10:15:35.481+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-28T10:15:35.498+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T10:15:35.499+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_adresses_ban, run_id=manual__2026-06-28T09:54:33+00:00, execution_date=20260628T095433, start_date=20260628T101532, end_date=20260628T101535
+[2026-06-28T10:15:35.562+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-28T10:15:35.590+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-28T10:15:35.597+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

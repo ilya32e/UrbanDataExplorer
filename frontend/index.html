@@ -14,7 +14,7 @@
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="/static/styles.css?v=20260429-ui7" />
+    <link rel="stylesheet" href="/static/styles.css?v=20260626-timeline" />
   </head>
   <body>
     <div class="page-shell">
@@ -56,6 +56,40 @@
             </label>
           </div>
           <p class="control-context" id="view-summary"></p>
+
+          <div class="timeline-player" id="timeline-player">
+            <div class="timeline-player-head">
+              <button
+                type="button"
+                class="timeline-play-button"
+                id="timeline-play"
+                aria-pressed="false"
+                aria-label="Rejouer l'evolution annee par annee"
+              >
+                <span class="timeline-play-icon" aria-hidden="true"></span>
+                <span class="timeline-play-text">Rejouer</span>
+              </button>
+              <div class="timeline-year-readout">
+                <span class="timeline-year-label">Annee jouee</span>
+                <strong id="timeline-year-value">—</strong>
+              </div>
+            </div>
+            <input
+              type="range"
+              id="timeline-range"
+              class="timeline-range"
+              min="0"
+              max="0"
+              step="1"
+              value="0"
+              aria-label="Curseur temporel des annees de ventes"
+            />
+            <div class="timeline-ticks" id="timeline-ticks"></div>
+            <p class="timeline-hint">
+              Lecture animee de la carte et des indicateurs ville, annee par annee. Choisissez une metrique annuelle
+              (prix, transactions, surface...) pour voir la choroplethe evoluer.
+            </p>
+          </div>
         </article>
       </section>
 
@@ -164,6 +198,6 @@
     </div>
 
     <script src="https://unpkg.com/maplibre-gl@5.9.0/dist/maplibre-gl.js"></script>
-    <script src="/static/app.js?v=20260429-ui7" defer></script>
+    <script src="/static/app.js?v=20260626-timeline" defer></script>
   </body>
 </html>

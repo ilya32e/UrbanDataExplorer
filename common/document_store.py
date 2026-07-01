@@ -87,6 +87,17 @@ def read_blob_dataset(dataset_name: str) -> Any:
     return read_document_dataset(dataset_name)
 
 
+def ensure_geojson_indexes(collection) -> None:
+    """Cree les index des collections GeoJSON (idempotent).
+
+    - `feature_index` : utilise pour le tri stable a la lecture (read_geojson_dataset).
+    - `properties.arrondissement` : accelere les filtres spatiaux par arrondissement.
+    `create_index` est idempotent : il ne fait rien si l'index existe deja.
+    """
+    collection.create_index("feature_index", name="idx_feature_index")
+    collection.create_index("properties.arrondissement", name="idx_properties_arrondissement")
+
+
 def write_geojson_dataset(dataset_name: str, payload: dict[str, Any]) -> str:
     collection_name = GEOJSON_DATASETS[dataset_name]
     features = payload.get("features", [])
@@ -106,6 +117,8 @@ def write_geojson_dataset(dataset_name: str, payload: dict[str, Any]) -> str:
                 for index, feature in enumerate(features)
             ]
         )
+        # Materialise les index NoSQL apres chargement (modelisation MongoDB, C1.2).
+        ensure_geojson_indexes(collection)
 
     return collection_name
 

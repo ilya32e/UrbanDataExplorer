@@ -55,6 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--skip-validate", action="store_true", help="Ignore l'etape de validation.")
     run_parser.add_argument("--skip-noise", action="store_true", help="Ignore le calcul Bruitparif pendant le build.")
 
+    monitor_parser = subparsers.add_parser(
+        "pipeline-monitor",
+        help="Consomme en temps reel les evenements du pipeline Airflow (Redis Streams, C2.2).",
+    )
+    monitor_parser.add_argument("--max", type=int, default=None, help="Nombre max d'evenements a traiter.")
+    monitor_parser.add_argument("--block-ms", type=int, default=3000, help="Attente bloquante par lecture (ms).")
+
     return parser
 
 
@@ -139,12 +146,30 @@ def cmd_run(
     return 0
 
 
+def cmd_pipeline_monitor(max_messages: int | None, block_ms: int) -> int:
+    from .streaming.pipeline_monitor import consume_pipeline_events, pipeline_events_summary
+
+    print("Evenements du pipeline (temps reel) :")
+    processed = consume_pipeline_events(max_messages=max_messages, block_ms=block_ms)
+    if not processed:
+        print("  (aucun nouvel evenement — lancez d'abord le DAG 'urban_data_pipeline')")
+    summary = pipeline_events_summary()
+    print(
+        f"\n{processed} nouvel(s) evenement(s) consomme(s). "
+        f"Total stream : {summary['events']} evenements | {summary['ok']} ok | "
+        f"{summary['error']} erreur(s) | duree cumulee {summary['total_duration_ms']} ms."
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "list":
         return cmd_list()
+    if args.command == "pipeline-monitor":
+        return cmd_pipeline_monitor(args.max, args.block_ms)
     if args.command == "download":
         return cmd_download(args.names, args.force)
     if args.command == "build":

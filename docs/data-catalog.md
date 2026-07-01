@@ -26,6 +26,7 @@ Les sources ont ete choisies selon quatre criteres:
 | --- | --- | --- | --- | --- |
 | DVF 2023-2025 | Transactions immobilieres, prix au m2, volumes, surfaces | adresse / mutation | TXT ZIP | reference publique la plus naturelle pour observer les ventes reelles |
 | INSEE Filosofi 2021 | Revenus, niveau de vie, part imposable, pauvrete | IRIS | CSV ZIP | apporte le contexte socio-economique necessaire pour relier prix et pouvoir d'achat |
+| INSEE Recensement Logement 2021 | Parc de logements et residences principales HLM pour la part de logements sociaux | IRIS | CSV ZIP | seule source a la maille IRIS donnant le stock (numerateur HLM et denominateur residences principales) pour une vraie part, et non un flux |
 | Paris Data - Encadrement des loyers | Loyers de reference et effort locatif | quartier | CSV | permet de comparer achat et location avec une source officielle parisienne |
 | Paris Data - Logements sociaux finances | Effort annuel de production sociale | arrondissement / programme | CSV | ajoute une lecture d'offre publique et de politique du logement |
 | Bruitparif 2024 | Composantes du score de qualite de vie | couche SIG / zone | XLSX + ZIP | apporte la dimension environnementale que n'offrent pas les sources immobilieres classiques |
@@ -115,6 +116,12 @@ Limites:
 - mesure des logements finances, pas du stock total de parc social
 - interpretation necessite prudence d'une annee a l'autre
 
+Complement de stock:
+
+- `INSEE Recensement Logement 2021` apporte le **stock** manquant pour calculer une vraie part de logements sociaux
+- `social_housing_share_pct = P21_RP_LOCHLMV / P21_RP * 100` agrege des IRIS vers l'arrondissement (meme maille que Filosofi)
+- limite: `P21_RP_LOCHLMV` (HLM louees vides) est un sous-ensemble du decompte SRU; le taux obtenu est donc une borne basse, et le millesime 2021 est statique (l'evolution s'appuie sur le flux `social_units_financed`)
+
 ### 5. Ajouter la qualite de vie environnementale
 
 Source cle:
@@ -166,10 +173,13 @@ Le dashboard expose les indicateurs suivants. Leur calcul repose sur les artefac
 | `median_rooms` | mediane du nombre de pieces principales dans le groupe | DVF |
 | `apartment_share_pct` | part des ventes de type appartement dans le groupe | DVF |
 | `house_share_pct` | part des ventes de type maison dans le groupe | DVF |
+| `studio_t1_share_pct` | part des ventes d'appartements d'1 piece (studio / T1) dans le groupe | DVF |
+| `t2_share_pct` / `t3_share_pct` / `t4_share_pct` / `t5p_share_pct` | part des ventes d'appartements de 2, 3, 4, 5 pieces et plus dans le groupe | DVF |
 | `median_income_eur` | mediane de `DEC_MED21` sur les IRIS rattaches a l'arrondissement | INSEE Filosofi |
 | `reference_rent_majorated_eur_m2` | moyenne des loyers de reference majores des quartiers appartenant a l'arrondissement, par annee | Encadrement des loyers |
 | `social_units_financed` | somme annuelle des logements sociaux finances dans l'arrondissement | Logements sociaux finances |
 | `social_units_financed_5y` | somme de `social_units_financed` sur les 5 derniers millesimes disponibles | Logements sociaux finances |
+| `social_housing_share_pct` | `P21_RP_LOCHLMV / P21_RP * 100` agrege des IRIS vers l'arrondissement (part du parc) | INSEE Recensement Logement |
 | `months_income_for_1sqm` | `median_price_m2 / (median_income_eur / 12)` | DVF + INSEE Filosofi |
 | `estimated_50m2_rent_effort_pct` | `reference_rent_majorated_eur_m2 * 50 / (median_income_eur / 12) * 100` | Loyers + INSEE Filosofi |
 | `quality_of_life_score` | score composite sur 10 construit a partir du bruit, de l'air et de la pression environnementale | Bruitparif |
@@ -181,7 +191,7 @@ Le dashboard expose les indicateurs suivants. Leur calcul repose sur les artefac
 Remarque:
 
 - les vues `quartier`, `street` et `building` exposent les metriques de vente disponibles a leur maille
-- a ces niveaux cartographiques fins: `median_price_m2`, `transactions`, `median_sale_value_eur`, `median_surface_m2`, `median_rooms`, `apartment_share_pct` et `house_share_pct` sont servies sur la carte
+- a ces niveaux cartographiques fins: `median_price_m2`, `transactions`, `median_sale_value_eur`, `median_surface_m2`, `median_rooms`, `apartment_share_pct`, `house_share_pct` et la repartition par typologie (`studio_t1_share_pct`, `t2_share_pct`, `t3_share_pct`, `t4_share_pct`, `t5p_share_pct`) sont servies sur la carte
 - le dashboard principal par arrondissement reste la vue qui consolide aussi les indicateurs revenu, loyer, logement social et qualite de vie
 - le selecteur d'annee de la carte pilote les metriques de vente; les indicateurs de contexte par arrondissement s'appuient sur les derniers millesimes agreges disponibles
 
@@ -209,6 +219,7 @@ Formules clefs:
 
 - `social_units_financed = sum(nombre total de logements finances)` a l'annee et a l'arrondissement
 - `social_units_financed_5y = sum(social_units_financed)` sur les 5 derniers millesimes disponibles
+- `social_housing_share_pct = sum(P21_RP_LOCHLMV) / sum(P21_RP) * 100` sur les IRIS de l'arrondissement (part du parc, recensement 2021)
 
 ### Niveau de vie
 

@@ -1,0 +1,22 @@
+[2026-07-01T16:58:08.620+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-07-01T16:58:08.639+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_streaming_demo.monitor_pipeline_events manual__2026-07-01T16:58:05+00:00 [queued]>
+[2026-07-01T16:58:08.648+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_streaming_demo.monitor_pipeline_events manual__2026-07-01T16:58:05+00:00 [queued]>
+[2026-07-01T16:58:08.649+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 1
+[2026-07-01T16:58:08.673+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): monitor_pipeline_events> on 2026-07-01 16:58:05+00:00
+[2026-07-01T16:58:08.684+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_streaming_demo', 'monitor_pipeline_events', 'manual__2026-07-01T16:58:05+00:00', '--job-id', '147', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_streaming_dag.py', '--cfg-path', '/tmp/tmpnv2i6_6h']
+[2026-07-01T16:58:08.687+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=3658) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-07-01T16:58:08.688+0000] {standard_task_runner.py:105} INFO - Job 147: Subtask monitor_pipeline_events
+[2026-07-01T16:58:08.688+0000] {standard_task_runner.py:72} INFO - Started process 3659 to run task
+[2026-07-01T16:58:08.889+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_streaming_demo.monitor_pipeline_events manual__2026-07-01T16:58:05+00:00 [running]> on host 89761de2adae
+[2026-07-01T16:58:09.102+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_streaming_demo' AIRFLOW_CTX_TASK_ID='monitor_pipeline_events' AIRFLOW_CTX_EXECUTION_DATE='2026-07-01T16:58:05+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-07-01T16:58:05+00:00'
+[2026-07-01T16:58:09.105+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-07-01T16:58:10.423+0000] {logging_mixin.py:190} INFO - Evenements du pipeline (temps reel) :
+[2026-07-01T16:58:13.434+0000] {logging_mixin.py:190} INFO -   (aucun nouvel evenement — lancez d'abord le DAG 'urban_data_pipeline')
+[2026-07-01T16:58:13.436+0000] {logging_mixin.py:190} INFO - 
+0 nouvel(s) evenement(s) consomme(s). Total stream : 5 evenements | 5 ok | 0 erreur(s) | duree cumulee 28200 ms.
+[2026-07-01T16:58:13.437+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-07-01T16:58:13.451+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-07-01T16:58:13.452+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_streaming_demo, task_id=monitor_pipeline_events, run_id=manual__2026-07-01T16:58:05+00:00, execution_date=20260701T165805, start_date=20260701T165808, end_date=20260701T165813
+[2026-07-01T16:58:13.506+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-07-01T16:58:13.531+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-07-01T16:58:13.541+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

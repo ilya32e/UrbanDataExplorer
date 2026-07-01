@@ -77,8 +77,7 @@ flowchart TB
     end
 
     subgraph STREAM["Streaming temps reel"]
-        RS["Redis Streams - sales:events"]
-        KF["Apache Kafka - sales.events"]
+        RS["Redis Streams - pipeline:events (monitoring)"]
     end
 
     subgraph STORE["Stockage"]
@@ -101,10 +100,7 @@ flowchart TB
     GO -. parquet .-> DL
     GO --> MY
     GO --> MO
-    SI --> RS
-    SI --> KF
-    RS --> MY
-    KF --> MO
+    AF --> RS
     MY --> API
     MO --> API
     API --> LB --> FE
@@ -407,16 +403,17 @@ L'API lit directement `MySQL` pour les donnees tabulaires et `MongoDB` pour les 
 
 ### Securite, quotas et performance
 
-L'API integre une couche de securite et d'observabilite **opt-in** (local-first par defaut):
+L'API integre une couche de securite et d'observabilite (local-first par defaut):
 
-- **JWT / OAuth2** (`Authorization: Bearer`): `POST /auth/token` echange un identifiant/mot de
-  passe (`AUTH_USERNAME` / `AUTH_PASSWORD`, signe avec `AUTH_SECRET_KEY`) contre un **JWT** signe
-  HS256. Le bouton `Authorize` de Swagger gere ce flux. Active des que `AUTH_SECRET_KEY`,
-  `AUTH_USERNAME` et `AUTH_PASSWORD` sont definis.
-- **Cle API** (`X-API-Key`): alternative service-a-service, conservee pour compat. Si `API_KEY`
-  est defini, les endpoints `/api/*` et `/sources` l'acceptent aussi.
-- Si **ni JWT ni cle API** ne sont configures, l'API reste ouverte (le dashboard fonctionne sans
-  configuration); `/health` et `/auth/token` restent toujours ouverts.
+- **JWT / OAuth2** (`Authorization: Bearer`) — **seul mecanisme d'authentification** : `POST
+  /auth/token` echange un identifiant/mot de passe (`AUTH_USERNAME` / `AUTH_PASSWORD`, signe avec
+  `AUTH_SECRET_KEY`) contre un **JWT** signe HS256. Le bouton `Authorize` de Swagger gere ce flux.
+  Active des que `AUTH_SECRET_KEY`, `AUTH_USERNAME` et `AUTH_PASSWORD` sont definis (par defaut
+  dans `docker-compose.yml`).
+- **Connexion directe du frontend** : le dashboard recupere lui-meme un JWT au chargement (via
+  les identifiants de service de `frontend/app.js`) et l'attache a tous ses appels `/api/*` —
+  aucun ecran de login. `/health` et `/auth/token` restent toujours ouverts.
+- Si le JWT n'est pas configure cote serveur, l'API reste ouverte (mode local-first).
 - **Rate-limiting** par IP (`API_RATE_LIMIT` requetes par `API_RATE_WINDOW` secondes), renvoie
   `429` au-dela du quota.
 - **Mesure du temps de traitement**: chaque reponse porte l'en-tete `X-Process-Time-ms`, et les
@@ -444,29 +441,27 @@ Le rapport API est ecrit dans `reports/benchmark.csv`, le rapport pipeline (temp
 volumetrie) dans `reports/pipeline_metrics.csv`. La modelisation relationnelle (cles primaires,
 index, MCD/MLD/MPD) est documentee dans [`docs/data-model.md`](docs/data-model.md).
 
-### Streaming temps reel (Redis Streams)
+### Streaming temps reel — monitoring du pipeline (Redis Streams)
 
-En complement du pipeline batch, un mode **streaming** publie les transactions comme evenements
-et les agrege en temps reel (broker `Redis Streams`, consumer group avec accuse `XACK`):
+Le jeu de donnees est statique (transactions deja telechargees) : plutot que de *rejouer*
+artificiellement des ventes, le streaming porte sur les **evenements reels du pipeline**. A chaque
+execution du DAG `urban_data_pipeline`, chaque tache publie un evenement (`start` / `ok` / `error`
++ duree) sur le stream `pipeline:events` via `XADD`. Ces evenements **naissent au fil du run** :
+c'est un vrai cas d'usage streaming, applique a l'observabilite de l'orchestration (C2.2).
 
-```powershell
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-produce --count 2000 --reset
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-consume --max 2000
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py stream-status
-```
-
-Le producteur (`XADD`) alimente le stream `sales:events`; le consommateur agrege par
-arrondissement (transactions, prix m2 moyen) dans `Redis`. Plusieurs consommateurs du meme groupe
-peuvent tourner en parallele pour repartir la charge (scalabilite horizontale).
-
-Une variante **Apache Kafka** est aussi fournie (broker KRaft, topic `sales.events` a 3 partitions,
-consumer group, agregats materialises dans `MongoDB`):
+Un **consumer group** Redis (`XREADGROUP` + accuse `XACK`) les consomme en temps reel :
 
 ```powershell
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-produce --count 2000
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-consume --max 2000
-docker compose --profile tools run --rm pipeline python pipeline/run_imports.py kafka-status
+docker compose --profile tools run --rm pipeline python pipeline/run_imports.py pipeline-monitor
 ```
+
+Cote Airflow, le DAG `urban_data_streaming_demo` fait la meme chose : declencher
+`urban_data_pipeline`, puis ce DAG pour voir defiler ses evenements et un resume agrege
+(nb d'evenements, taches en erreur, duree cumulee). Plusieurs consommateurs du meme groupe
+peuvent tourner en parallele (traitement distribue).
+
+> Choix securite : la brique temps reel repose uniquement sur Redis Streams (deja present
+> dans le stack), sans broker externe expose, afin de reduire la surface d'attaque.
 
 ### Scalabilite, load-balancing et monitoring
 

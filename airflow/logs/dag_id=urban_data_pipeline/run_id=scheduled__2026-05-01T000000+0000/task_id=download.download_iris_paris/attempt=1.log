@@ -1,0 +1,36 @@
+[2026-06-28T09:54:31.864+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T09:54:31.910+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.926+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.927+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-28T09:54:31.983+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_iris_paris> on 2026-05-01 00:00:00+00:00
+[2026-06-28T09:54:32.011+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=538) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T09:54:32.013+0000] {standard_task_runner.py:72} INFO - Started process 554 to run task
+[2026-06-28T09:54:32.003+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_iris_paris', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '11', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmp4gbzkuf7']
+[2026-06-28T09:54:32.019+0000] {standard_task_runner.py:105} INFO - Job 11: Subtask download.download_iris_paris
+[2026-06-28T09:54:32.202+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T09:54:32.474+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_iris_paris' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-28T09:54:32.478+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T09:54:34.515+0000] {logging_mixin.py:190} INFO - iris_paris: /opt/***/project/data/bronze/reference/iris-paris.csv
+[2026-06-28T09:54:34.517+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-28T09:54:34.540+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T09:54:34.543+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_iris_paris, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260628T095431, end_date=20260628T095434
+[2026-06-28T09:54:34.615+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-28T09:54:34.635+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
+[2026-06-29T08:21:48.306+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-29T08:21:48.334+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.346+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.347+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-29T08:21:48.381+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_iris_paris> on 2026-05-01 00:00:00+00:00
+[2026-06-29T08:21:48.394+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_iris_paris', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '110', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpz9dchnaq']
+[2026-06-29T08:21:48.397+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=559) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-29T08:21:48.401+0000] {standard_task_runner.py:105} INFO - Job 110: Subtask download.download_iris_paris
+[2026-06-29T08:21:48.402+0000] {standard_task_runner.py:72} INFO - Started process 563 to run task
+[2026-06-29T08:21:48.512+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_iris_paris scheduled__2026-05-01T00:00:00+00:00 [running]> on host 875a7b04857f
+[2026-06-29T08:21:48.623+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_iris_paris' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-29T08:21:48.626+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-29T08:21:49.673+0000] {logging_mixin.py:190} INFO - iris_paris: /opt/***/project/data/bronze/reference/iris-paris.csv
+[2026-06-29T08:21:49.674+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-29T08:21:49.688+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-29T08:21:49.690+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_iris_paris, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260629T082148, end_date=20260629T082149
+[2026-06-29T08:21:49.754+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-29T08:21:49.770+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

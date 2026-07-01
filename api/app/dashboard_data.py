@@ -17,6 +17,11 @@ SPATIAL_SALES_MAP_METRICS = (
     "median_rooms",
     "apartment_share_pct",
     "house_share_pct",
+    "studio_t1_share_pct",
+    "t2_share_pct",
+    "t3_share_pct",
+    "t4_share_pct",
+    "t5p_share_pct",
 )
 QUARTIER_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
 STREET_MAP_METRICS = SPATIAL_SALES_MAP_METRICS
@@ -26,6 +31,11 @@ EXTRA_METRIC_CATALOG = {
     "median_rooms": {"label": "Pieces medianes", "unit": "pieces", "supports_year": True},
     "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
     "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
+    "studio_t1_share_pct": {"label": "Part studios / T1", "unit": "%", "supports_year": True},
+    "t2_share_pct": {"label": "Part T2", "unit": "%", "supports_year": True},
+    "t3_share_pct": {"label": "Part T3", "unit": "%", "supports_year": True},
+    "t4_share_pct": {"label": "Part T4", "unit": "%", "supports_year": True},
+    "t5p_share_pct": {"label": "Part T5 et plus", "unit": "%", "supports_year": True},
     "environmental_pressure_index": {"label": "Pression environnementale", "unit": "/100", "supports_year": False},
     "high_noise_share_pct": {"label": "Part de forte exposition au bruit", "unit": "%", "supports_year": False},
     "noise_score": {"label": "Score bruit", "unit": "class", "supports_year": False},
@@ -305,6 +315,11 @@ def overview_for_year(sales_year: int | None = None) -> dict[str, object]:
         "reference_rent_majorated_eur_m2": round(float(merged["reference_rent_majorated_eur_m2"].median()), 2),
         "social_units_financed": int(merged["social_units_financed"].sum()),
         "social_units_financed_5y": int(merged["social_units_financed_5y"].sum()),
+        "social_housing_share_pct": round(
+            float(merged["social_housing_units"].sum() / merged["main_residences"].sum() * 100.0), 1
+        )
+        if "main_residences" in merged.columns and merged["main_residences"].sum()
+        else None,
         "quality_of_life_score": round(float(merged["quality_of_life_score"].median()), 2),
         "months_income_for_1sqm": round(float(merged["months_income_for_1sqm"].median()), 2),
         "estimated_50m2_rent_effort_pct": round(float(merged["estimated_50m2_rent_effort_pct"].median()), 1),
@@ -375,6 +390,7 @@ def compare_arrondissements(left: int, right: int, sales_year: int | None = None
         "median_income_eur",
         "reference_rent_majorated_eur_m2",
         "social_units_financed",
+        "social_housing_share_pct",
         "quality_of_life_score",
         "months_income_for_1sqm",
         "estimated_50m2_rent_effort_pct",

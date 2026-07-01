@@ -1,0 +1,38 @@
+[2026-06-28T09:54:31.857+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T09:54:31.929+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.950+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.953+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-28T09:54:31.984+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_paris_loyers> on 2026-05-01 00:00:00+00:00
+[2026-06-28T09:54:32.011+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=541) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T09:54:32.014+0000] {standard_task_runner.py:72} INFO - Started process 555 to run task
+[2026-06-28T09:54:32.008+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_paris_loyers', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '7', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmp5fjt3ajt']
+[2026-06-28T09:54:32.017+0000] {standard_task_runner.py:105} INFO - Job 7: Subtask download.download_paris_loyers
+[2026-06-28T09:54:32.222+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T09:54:32.488+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_paris_loyers' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-28T09:54:32.495+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T09:54:34.666+0000] {logging_mixin.py:190} INFO - paris_loyers: /opt/***/project/data/bronze/raw/paris/encadrement-loyers.csv
+[2026-06-28T09:54:34.670+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-28T09:54:34.694+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T09:54:34.707+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_paris_loyers, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260628T095431, end_date=20260628T095434
+[2026-06-28T09:54:34.793+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-28T09:54:34.845+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-28T09:54:34.853+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
+[2026-06-29T08:21:48.336+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-29T08:21:48.361+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.375+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.377+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-29T08:21:48.429+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_paris_loyers> on 2026-05-01 00:00:00+00:00
+[2026-06-29T08:21:48.449+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=555) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-29T08:21:48.446+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_paris_loyers', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '118', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpwvondp80']
+[2026-06-29T08:21:48.451+0000] {standard_task_runner.py:72} INFO - Started process 579 to run task
+[2026-06-29T08:21:48.453+0000] {standard_task_runner.py:105} INFO - Job 118: Subtask download.download_paris_loyers
+[2026-06-29T08:21:48.559+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_paris_loyers scheduled__2026-05-01T00:00:00+00:00 [running]> on host 875a7b04857f
+[2026-06-29T08:21:48.685+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_paris_loyers' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-29T08:21:48.686+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-29T08:21:49.703+0000] {logging_mixin.py:190} INFO - paris_loyers: /opt/***/project/data/bronze/raw/paris/encadrement-loyers.csv
+[2026-06-29T08:21:49.704+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-29T08:21:49.716+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-29T08:21:49.732+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_paris_loyers, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260629T082148, end_date=20260629T082149
+[2026-06-29T08:21:49.805+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-29T08:21:49.834+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-29T08:21:49.856+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

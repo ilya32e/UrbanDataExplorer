@@ -57,6 +57,13 @@ Responsabilite:
 - `Gold`: stocker les tables analytiques dans `MySQL`
 - `Gold`: stocker les couches `GeoJSON` et metadonnees `JSON` dans `MongoDB`
 
+En complement des bases, le pipeline materialise aussi les zones `Silver` et `Gold`
+sous forme de **fichiers Parquet** dans `data/silver/` et `data/gold/` (data lake
+fichier). Les tables temporelles sont **partitionnees par annee** (Hive-style
+`year=YYYY/`), ce qui permet le partition pruning a la lecture. On a donc trois
+zones de data lake coherentes : `data/bronze/` (brut) -> `data/silver/` ->
+`data/gold/` (voir [`datalake.py`](../pipeline/src/urban_data_explorer/datalake.py)).
+
 Le projet conserve donc les sources ouvertes en fichiers pour la zone `Bronze`, puis materialise les datasets prepares dans deux stockages complementaires:
 
 - `MySQL` pour les indicateurs tabulaires et relationnels
@@ -70,6 +77,18 @@ Responsabilite:
 - lire les documents `GeoJSON/JSON` depuis `MongoDB`
 - exposer les endpoints du dashboard
 - servir aussi les fichiers statiques du frontend
+- securiser les endpoints de donnees par **JWT (OAuth2 password flow)** ou cle API
+
+Securite (voir [`auth.py`](../api/app/auth.py) et [`security.py`](../api/app/security.py)):
+
+- `POST /auth/token` echange un couple identifiant/mot de passe contre un **JWT**
+  signe (HS256), visible via le bouton `Authorize` de Swagger
+- les routes `/api/*` et `/sources` exigent un **`Authorization: Bearer <token>`**
+  (JWT = seul mecanisme d'authentification)
+- le **frontend se connecte directement** : il recupere lui-meme un JWT au chargement
+  et l'attache a ses appels (pas d'ecran de login)
+- rate-limiting par IP + log des requetes lentes
+- mode *local-first* : si le JWT n'est pas configure, l'API reste ouverte
 
 Principaux endpoints:
 
@@ -107,6 +126,17 @@ Responsabilite:
 - `python pipeline/run_imports.py validate` controle la presence des tables `Gold`, des colonnes attendues et des documents MongoDB
 - `python pipeline/run_imports.py run` orchestre `download`, `build` et `validate` pour les executions planifiees
 - `python -m unittest discover -s tests` couvre les fonctions de calcul, le CLI et les helpers de validation
+
+**Orchestration Apache Airflow** : le meme flux est industrialise sous forme de DAGs
+(voir [`airflow.md`](airflow.md)). `urban_data_pipeline` parallelise le telechargement
+de chaque source (fan-out), puis enchaine `build` et `validate` ; `urban_data_streaming_demo`
+consomme via Redis Streams les evenements temps reel emis par les taches du pipeline (`pipeline:events`).
+Lancement : `docker compose -f docker-compose.yml -f docker-compose.airflow.yml up -d`.
+
+**Mesure de performance du pipeline** : chaque build chronometre ses etapes et compte la
+volumetrie (lignes par dataset), ecrites dans `reports/pipeline_metrics.csv` (voir
+[`metrics.py`](../pipeline/src/urban_data_explorer/metrics.py)). C'est le pendant ETL de
+`scripts/benchmark.py` qui mesure, lui, la latence de l'API.
 
 ## Organisation du depot
 
@@ -199,6 +229,9 @@ Le stockage mixte repond mieux au cadre pedagogique du projet:
 
 - `MySQL` stocke les tables analytiques utilisees pour les KPIs, les comparaisons et les timelines
 - `MongoDB` stocke les `FeatureCollection` cartographiques et les documents de metadonnees
+- les collections GeoJSON sont **indexees** (`feature_index` pour le tri stable,
+  `properties.arrondissement` pour les filtres spatiaux) ; les documents de metadonnees
+  sont adresses par `_id` (index par defaut)
 - le pipeline ecrit dans les deux stockages pendant `build`
 - l'API assemble ensuite les reponses en lisant chaque type de donnee dans le moteur le plus adapte
 
@@ -219,11 +252,13 @@ Le stockage mixte repond mieux au cadre pedagogique du projet:
 - pas de deploiement public automatise dans le repo a ce stade
 - pas de tests automatises complets sur la qualite des builds
 - les datasets publics restent telecharges localement plutot que versionnes
+- le data lake Parquet reste local (pas de stockage objet S3/ADLS ni chiffrement au repos)
+- monitoring API en memoire par instance (pas encore centralise Prometheus/Grafana)
 - les calculs de qualite de vie reposent sur des ponderations explicites mais discutables
 
 ## Evolutions naturelles
 
 - ajouter une CI pour verifier le pipeline et l'API
-- industrialiser la regeneration des tables `Gold`
-- brancher un stockage objet ou une base analytique si les volumes augmentent
+- brancher un stockage objet (S3/ADLS) pour le data lake et chiffrer au repos
+- centraliser les metriques (Prometheus/Grafana) pour le multi-replicas
 - ajouter une strategie de deploiement public du dashboard avec jeux de test preconstruits

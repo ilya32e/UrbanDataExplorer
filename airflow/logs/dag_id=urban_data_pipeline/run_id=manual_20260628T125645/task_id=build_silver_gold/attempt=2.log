@@ -1,0 +1,149 @@
+[2026-06-28T11:04:24.572+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T11:04:24.589+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold manual_20260628T125645 [queued]>
+[2026-06-28T11:04:24.599+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold manual_20260628T125645 [queued]>
+[2026-06-28T11:04:24.599+0000] {taskinstance.py:2866} INFO - Starting attempt 2 of 3
+[2026-06-28T11:04:24.616+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): build_silver_gold> on 2026-06-28 10:56:56+00:00
+[2026-06-28T11:04:24.624+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'build_silver_gold', 'manual_20260628T125645', '--job-id', '52', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpvnrzc8rm']
+[2026-06-28T11:04:24.626+0000] {standard_task_runner.py:105} INFO - Job 52: Subtask build_silver_gold
+[2026-06-28T11:04:24.626+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=1867) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T11:04:24.627+0000] {standard_task_runner.py:72} INFO - Started process 1868 to run task
+[2026-06-28T11:04:24.705+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.build_silver_gold manual_20260628T125645 [running]> on host 9a3c8cd68013
+[2026-06-28T11:04:24.790+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='build_silver_gold' AIRFLOW_CTX_EXECUTION_DATE='2026-06-28T10:56:56+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='manual_20260628T125645'
+[2026-06-28T11:04:24.792+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T11:06:46.661+0000] {taskinstance.py:3311} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 762, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 733, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 422, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/urban_data_pipeline_dag.py", line 67, in build_gold_zone
+    code = cmd_build(skip_noise=skip_noise)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/cli.py", line 116, in cmd_build
+    outputs = build_gold(include_noise=not skip_noise)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/build.py", line 214, in build_gold
+    outputs.update(write_datalake(silver=silver_lake, gold=gold_lake))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 71, in write_datalake
+    outputs.update(write_zone(SILVER_DIR, silver))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 59, in write_zone
+    f"lake:{zone_dir.name}:{name}": _write_dataset(zone_dir, name, frame)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 44, in _write_dataset
+    shutil.rmtree(target)  # reconstruction complete a chaque build
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/shutil.py", line 759, in rmtree
+    _rmtree_safe_fd(stack, onexc)
+  File "/usr/local/lib/python3.12/shutil.py", line 703, in _rmtree_safe_fd
+    onexc(func, path, err)
+  File "/usr/local/lib/python3.12/shutil.py", line 700, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/local/lib/python3.12/shutil.py", line 698, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+PermissionError: [Errno 13] Permission denied: '/opt/airflow/project/data/silver/sales_yearly/year=2025'
+[2026-06-28T11:06:46.704+0000] {taskinstance.py:1225} INFO - Marking task as UP_FOR_RETRY. dag_id=urban_data_pipeline, task_id=build_silver_gold, run_id=manual_20260628T125645, execution_date=20260628T105656, start_date=20260628T110424, end_date=20260628T110646
+[2026-06-28T11:06:46.718+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T11:06:46.719+0000] {standard_task_runner.py:124} ERROR - Failed to execute job 52 for task build_silver_gold ([Errno 13] Permission denied: '/opt/airflow/project/data/silver/sales_yearly/year=2025'; 1868)
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py", line 117, in _start_by_fork
+    ret = args.func(args, dag=self.dag)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/cli_config.py", line 49, in command
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/cli.py", line 116, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 483, in task_run
+    task_return_code = _run_task_by_selected_method(args, _dag, ti)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 256, in _run_task_by_selected_method
+    return _run_raw_task(args, ti)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 341, in _run_raw_task
+    return ti._run_raw_task(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/session.py", line 97, in wrapper
+    return func(*args, session=session, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3005, in _run_raw_task
+    return _run_raw_task(
+           ^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 273, in _run_raw_task
+    TaskInstance._execute_task_with_callbacks(
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3159, in _execute_task_with_callbacks
+    result = self._execute_task(context, task_orig)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3183, in _execute_task
+    return _execute_task(self, context, task_orig)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 762, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 733, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 422, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/urban_data_pipeline_dag.py", line 67, in build_gold_zone
+    code = cmd_build(skip_noise=skip_noise)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/cli.py", line 116, in cmd_build
+    outputs = build_gold(include_noise=not skip_noise)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/build.py", line 214, in build_gold
+    outputs.update(write_datalake(silver=silver_lake, gold=gold_lake))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 71, in write_datalake
+    outputs.update(write_zone(SILVER_DIR, silver))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 59, in write_zone
+    f"lake:{zone_dir.name}:{name}": _write_dataset(zone_dir, name, frame)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/datalake.py", line 44, in _write_dataset
+    shutil.rmtree(target)  # reconstruction complete a chaque build
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/shutil.py", line 759, in rmtree
+    _rmtree_safe_fd(stack, onexc)
+  File "/usr/local/lib/python3.12/shutil.py", line 703, in _rmtree_safe_fd
+    onexc(func, path, err)
+  File "/usr/local/lib/python3.12/shutil.py", line 700, in _rmtree_safe_fd
+    onexc(os.unlink, fullname, err)
+  File "/usr/local/lib/python3.12/shutil.py", line 698, in _rmtree_safe_fd
+    os.unlink(entry.name, dir_fd=topfd)
+PermissionError: [Errno 13] Permission denied: '/opt/airflow/project/data/silver/sales_yearly/year=2025'
+[2026-06-28T11:06:46.789+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 1
+[2026-06-28T11:06:46.810+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-28T11:06:46.817+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

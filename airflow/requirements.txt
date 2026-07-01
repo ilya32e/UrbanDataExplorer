@@ -1,0 +1,15 @@
+# Dependances du pipeline Urban Data Explorer ajoutees a l'image Airflow.
+#
+# IMPORTANT : pas de versions epinglees ici. L'installation utilise le fichier de
+# contraintes officiel d'Airflow (voir airflow/Dockerfile) pour que SQLAlchemy,
+# pandas, etc. restent aux versions compatibles avec Airflow 2.10 (SQLAlchemy 1.4).
+# On ne reinstalle donc PAS SQLAlchemy / redis / requests / pyyaml deja fournis et
+# pinnes par Airflow.
+pandas
+pyarrow
+openpyxl
+PyMySQL
+pymongo
+pyproj
+pyshp
+shapely

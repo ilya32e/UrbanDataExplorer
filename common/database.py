@@ -8,6 +8,7 @@ from urllib.parse import quote_plus
 import pandas as pd
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
 
 
 TABULAR_DATASETS = {
@@ -50,7 +51,9 @@ def get_database_url() -> str:
 
 @lru_cache(maxsize=1)
 def get_engine() -> Engine:
-    return create_engine(get_database_url(), pool_pre_ping=True)
+    # pool_pre_ping : detecte une connexion morte (ex: MySQL redemarre) et la remplace.
+    # pool_recycle : recycle les connexions agees pour resister aux coupures reseau (resilience).
+    return create_engine(get_database_url(), pool_pre_ping=True, pool_recycle=1800)
 
 
 def ping_sql_database() -> None:
@@ -82,3 +85,46 @@ def write_table_dataset(dataset_name: str, dataframe: pd.DataFrame) -> str:
 def read_table_dataset(dataset_name: str, **kwargs: Any) -> pd.DataFrame:
     table_name = TABULAR_DATASETS[dataset_name]
     return pd.read_sql_table(table_name, con=get_engine(), **kwargs)
+
+
+def _execute_ddl(statement: str) -> None:
+    # Le DDL MySQL auto-commit ; on isole chaque instruction sur sa propre
+    # connexion pour qu'un echec (ex: cle deja presente) n'impacte pas les suivantes.
+    # `engine.begin()` ouvre une transaction qui commit a la sortie du bloc : valable
+    # en SQLAlchemy 2.0 (conteneur API) comme en 1.4 (image Airflow), ou Connection
+    # n'expose pas `.commit()` en mode legacy.
+    with get_engine().begin() as connection:
+        connection.execute(text(statement))
+
+
+def apply_table_keys(specs: dict[str, dict[str, list]]) -> dict[str, str]:
+    """Applique cles primaires et index sur les tables Gold apres le build.
+
+    pandas.to_sql recree les tables sans contraintes : cette etape materialise la
+    modelisation relationnelle (cles, index) de facon idempotente. Chaque ALTER est
+    tente independamment et les echecs sont rapportes sans interrompre le build.
+    """
+    results: dict[str, str] = {}
+    for dataset_name, spec in specs.items():
+        table_name = TABULAR_DATASETS[dataset_name]
+        primary_key = spec.get("primary_key") or []
+        indexes = spec.get("indexes") or []
+
+        if primary_key:
+            columns = ", ".join(f"`{column}`" for column in primary_key)
+            try:
+                _execute_ddl(f"ALTER TABLE `{table_name}` ADD PRIMARY KEY ({columns})")
+                results[f"{table_name}.PRIMARY"] = "ok"
+            except SQLAlchemyError as exc:
+                results[f"{table_name}.PRIMARY"] = f"skip ({exc.__class__.__name__})"
+
+        for index_columns in indexes:
+            columns = ", ".join(f"`{column}`" for column in index_columns)
+            index_name = "idx_" + "_".join(index_columns)
+            try:
+                _execute_ddl(f"ALTER TABLE `{table_name}` ADD INDEX `{index_name}` ({columns})")
+                results[f"{table_name}.{index_name}"] = "ok"
+            except SQLAlchemyError as exc:
+                results[f"{table_name}.{index_name}"] = f"skip ({exc.__class__.__name__})"
+
+    return results

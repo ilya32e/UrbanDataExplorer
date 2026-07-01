@@ -52,6 +52,34 @@ class BuildMetricTests(unittest.TestCase):
         self.assertEqual(result["median_rooms"], 1.5)
         self.assertEqual(result["apartment_share_pct"], 50)
         self.assertEqual(result["house_share_pct"], 50)
+        # Le seul appartement (1 piece) est un studio/T1, la maison n'entre dans aucune typologie T.
+        self.assertEqual(result["studio_t1_share_pct"], 50)
+        self.assertEqual(result["t2_share_pct"], 0)
+
+    def test_aggregate_sales_metrics_splits_apartment_typologies(self) -> None:
+        rooms_to_expected_column = {1: "studio_t1_share_pct", 2: "t2_share_pct", 3: "t3_share_pct", 4: "t4_share_pct", 6: "t5p_share_pct"}
+        data = pd.DataFrame(
+            [
+                {
+                    "arrondissement": 1,
+                    "year": 2025,
+                    "transaction_id": str(rooms),
+                    "price_per_m2": 10000,
+                    "sale_value_eur": 200000,
+                    "built_surface_m2": 20,
+                    "rooms": rooms,
+                    "Type local": "Appartement",
+                }
+                for rooms in rooms_to_expected_column
+            ]
+        )
+
+        result = aggregate_sales_metrics(data, ["arrondissement", "year"]).iloc[0]
+
+        # Cinq appartements, un par typologie : chaque part vaut 20 %.
+        for column in rooms_to_expected_column.values():
+            self.assertEqual(result[column], 20)
+        self.assertEqual(result["house_share_pct"], 0)
 
     def test_quality_of_life_score_bounds_extremes(self) -> None:
         summary = pd.DataFrame(

@@ -19,10 +19,28 @@ from shapely.ops import transform as shapely_transform
 from shapely.prepared import prep
 from shapely.strtree import STRtree
 
-from common.database import write_table_dataset
+from common.database import apply_table_keys, write_table_dataset
 from common.document_store import write_blob_dataset
 
+from .datalake import write_datalake
+from .metrics import PipelineProfiler
 from .paths import repo_path
+
+
+# Modelisation relationnelle des tables Gold (cles primaires + index).
+# Appliquee apres le build car pandas.to_sql recree les tables sans contraintes.
+GOLD_TABLE_KEYS: dict[str, dict[str, list]] = {
+    "gold_summary": {"primary_key": ["arrondissement"], "indexes": []},
+    "gold_sales": {"primary_key": ["arrondissement", "year"], "indexes": []},
+    "gold_income": {"primary_key": ["arrondissement"], "indexes": []},
+    "gold_rents": {"primary_key": ["arrondissement", "year"], "indexes": []},
+    "gold_social": {"primary_key": ["arrondissement", "year"], "indexes": []},
+    "gold_noise": {"primary_key": ["arrondissement"], "indexes": []},
+    "gold_sales_quartier": {"primary_key": [], "indexes": [["arrondissement", "year"]]},
+    "gold_sales_iris": {"primary_key": [], "indexes": [["arrondissement", "year"]]},
+    "gold_sales_street": {"primary_key": [], "indexes": [["arrondissement", "year"]]},
+    "gold_sales_building": {"primary_key": [], "indexes": [["arrondissement", "year"]]},
+}
 
 
 BAN_PLUS_WFS_URL = "https://data.geopf.fr/wfs/ows"
@@ -41,17 +59,29 @@ NEUTRAL_ENVIRONMENT_DEFAULTS = {
 
 
 def build_gold(include_noise: bool = True) -> dict[str, str]:
+    profiler = PipelineProfiler()
+
     arr_reference = load_arrondissement_reference()
     quartier_reference = load_quartier_reference()
     street_reference = load_street_reference(arr_reference["geojson"])
     iris_reference = load_iris_reference()
+    profiler.lap("load_references")
+
     sales_transactions = load_sales_transactions()
+    profiler.record_rows("sales_transactions", sales_transactions)
+    profiler.lap("load_sales")
+
     sales_yearly = build_sales_metrics(sales_transactions)
     spatial_sales = build_sales_spatial_outputs(sales_transactions, quartier_reference, iris_reference)
+    profiler.lap("build_sales_metrics")
+
     income = build_income_metrics()
+    housing_stock = build_housing_stock_metrics()
     rents_yearly = build_rent_metrics()
     social_yearly = build_social_metrics()
     noise = build_noise_metrics(arr_reference["geojson"]) if include_noise else build_empty_noise_metrics()
+    profiler.lap("build_context_metrics")
+
     sales_quartier_yearly = spatial_sales["sales_quartier_yearly"]
     sales_iris_yearly = spatial_sales["sales_iris_yearly"]
     sales_geocoded = spatial_sales["sales_geocoded"]
@@ -75,6 +105,7 @@ def build_gold(include_noise: bool = True) -> dict[str, str]:
 
     summary = arr_reference["table"].merge(sales_latest, on="arrondissement", how="left")
     summary = summary.merge(income, on="arrondissement", how="left")
+    summary = summary.merge(housing_stock, on="arrondissement", how="left")
     summary = summary.merge(rents_latest, on="arrondissement", how="left", suffixes=("", "_rent"))
     summary = summary.merge(social_latest, on="arrondissement", how="left", suffixes=("", "_social"))
     summary = summary.merge(social_5y, on="arrondissement", how="left")
@@ -92,6 +123,10 @@ def build_gold(include_noise: bool = True) -> dict[str, str]:
 
     for column in ["median_income_eur", "poverty_rate_pct", "first_quartile_income_eur", "third_quartile_income_eur", "share_taxable_pct"]:
         summary[column] = summary[column].fillna(summary[column].median())
+
+    summary["main_residences"] = summary["main_residences"].fillna(0)
+    summary["social_housing_units"] = summary["social_housing_units"].fillna(0)
+    summary["social_housing_share_pct"] = summary["social_housing_share_pct"].fillna(summary["social_housing_share_pct"].median())
 
     summary["months_income_for_1sqm"] = (
         summary["median_price_m2"] / (summary["median_income_eur"] / 12.0)
@@ -127,7 +162,9 @@ def build_gold(include_noise: bool = True) -> dict[str, str]:
         "metrics": metric_catalog(),
     }
 
-    return persist_outputs_to_storage(
+    profiler.lap("build_summary")
+
+    outputs = persist_outputs_to_storage(
         sales_yearly=sales_yearly,
         sales_quartier_yearly=sales_quartier_yearly,
         sales_iris_yearly=sales_iris_yearly,
@@ -146,6 +183,54 @@ def build_gold(include_noise: bool = True) -> dict[str, str]:
         spatial_coverage=spatial_coverage,
         dashboard_payload=dashboard_payload,
     )
+    profiler.lap("persist_storage")
+
+    # Materialise les zones Silver/Gold du data lake en Parquet partitionne (C1.3).
+    silver_lake = {
+        "sales_yearly": sales_yearly,
+        "sales_quartier_yearly": sales_quartier_yearly,
+        "sales_iris_yearly": sales_iris_yearly,
+        "sales_geocoded": sales_geocoded,
+        "sales_street_yearly": sales_street_yearly,
+        "sales_building_yearly": sales_building_yearly,
+        "income_arrondissement": income,
+        "rents_yearly": rents_yearly,
+        "social_yearly": social_yearly,
+        "noise_arrondissement": noise,
+    }
+    gold_lake = {
+        "arrondissement_summary": summary,
+        "sales_yearly": sales_yearly,
+        "sales_quartier_yearly": sales_quartier_yearly,
+        "sales_iris_yearly": sales_iris_yearly,
+        "sales_geocoded": sales_geocoded,
+        "sales_street_yearly": sales_street_yearly,
+        "sales_building_yearly": sales_building_yearly,
+        "social_yearly": social_yearly,
+        "rents_yearly": rents_yearly,
+        "income_arrondissement": income,
+        "noise_arrondissement": noise,
+    }
+    outputs.update(write_datalake(silver=silver_lake, gold=gold_lake))
+    profiler.lap("write_datalake")
+
+    # Materialise la modelisation relationnelle (cles primaires + index) sur les tables Gold.
+    for key, status in apply_table_keys(GOLD_TABLE_KEYS).items():
+        outputs[f"constraint:{key}"] = status
+    profiler.lap("apply_constraints")
+
+    # Volumetrie des principaux datasets produits (C2.4).
+    profiler.record_rows("gold_sales_yearly", sales_yearly)
+    profiler.record_rows("gold_arrondissement_summary", summary)
+    profiler.record_rows("gold_sales_geocoded", sales_geocoded)
+    profiler.record_rows("gold_sales_quartier_yearly", sales_quartier_yearly)
+    profiler.record_rows("gold_sales_street_yearly", sales_street_yearly)
+    profiler.record_rows("gold_sales_building_yearly", sales_building_yearly)
+
+    outputs["pipeline_metrics"] = profiler.write_report()
+    outputs["pipeline_total_seconds"] = str(profiler.total_seconds())
+
+    return outputs
 
 
 def persist_outputs_to_storage(
@@ -960,14 +1045,23 @@ def build_building_sales_metrics(data: pd.DataFrame) -> pd.DataFrame:
     return result[output_columns].sort_values(group_columns).reset_index(drop=True)
 
 
+TYPOLOGY_SHARE_COLUMNS = [
+    "studio_t1_share_pct",
+    "t2_share_pct",
+    "t3_share_pct",
+    "t4_share_pct",
+    "t5p_share_pct",
+]
+
+
 def aggregate_sales_metrics(data: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
+    share_columns = ["apartment_share_pct", "house_share_pct", *TYPOLOGY_SHARE_COLUMNS]
     metric_columns = [
         "median_price_m2",
         "median_sale_value_eur",
         "median_surface_m2",
         "median_rooms",
-        "apartment_share_pct",
-        "house_share_pct",
+        *share_columns,
     ]
     if data.empty:
         return pd.DataFrame(columns=[*group_columns, "transactions", *metric_columns])
@@ -984,17 +1078,33 @@ def aggregate_sales_metrics(data: pd.DataFrame, group_columns: list[str]) -> pd.
         .reset_index()
     )
 
+    # Repartition du parc : appartements ventiles par typologie (studio/T1 -> T5+)
+    # et maisons, chaque part exprimee en pourcentage des transactions du groupe.
+    is_apartment = data["Type local"].eq("Appartement")
+    rooms = pd.to_numeric(data["rooms"], errors="coerce")
+    share_flags = data.assign(
+        is_apartment=is_apartment,
+        is_house=data["Type local"].eq("Maison"),
+        studio_t1_share_pct=is_apartment & rooms.le(1),
+        t2_share_pct=is_apartment & rooms.eq(2),
+        t3_share_pct=is_apartment & rooms.eq(3),
+        t4_share_pct=is_apartment & rooms.eq(4),
+        t5p_share_pct=is_apartment & rooms.ge(5),
+    )
     shares = (
-        data.assign(is_apartment=data["Type local"].eq("Appartement"), is_house=data["Type local"].eq("Maison"))
-        .groupby(group_columns)
+        share_flags.groupby(group_columns)
         .agg(
             apartment_share_pct=("is_apartment", "mean"),
             house_share_pct=("is_house", "mean"),
+            studio_t1_share_pct=("studio_t1_share_pct", "mean"),
+            t2_share_pct=("t2_share_pct", "mean"),
+            t3_share_pct=("t3_share_pct", "mean"),
+            t4_share_pct=("t4_share_pct", "mean"),
+            t5p_share_pct=("t5p_share_pct", "mean"),
         )
         .reset_index()
     )
-    shares["apartment_share_pct"] = (shares["apartment_share_pct"] * 100.0).round(1)
-    shares["house_share_pct"] = (shares["house_share_pct"] * 100.0).round(1)
+    shares[share_columns] = (shares[share_columns] * 100.0).round(1)
 
     result = result.merge(shares, on=group_columns, how="left")
     result[metric_columns] = result[metric_columns].round(2)
@@ -1099,6 +1209,40 @@ def build_income_metrics() -> pd.DataFrame:
         "share_taxable_pct",
     ]
     result[numeric_cols] = result[numeric_cols].round(2)
+    return result
+
+
+def build_housing_stock_metrics() -> pd.DataFrame:
+    path = repo_path("data/bronze/raw/insee/logement-iris-2021.csv.zip")
+    with zipfile.ZipFile(path) as archive:
+        csv_name = [
+            name
+            for name in archive.namelist()
+            if name.lower().endswith(".csv") and not name.lower().split("/")[-1].startswith("meta")
+        ][0]
+        with archive.open(csv_name) as handle:
+            text = io.TextIOWrapper(handle, encoding="utf-8-sig")
+            data = pd.read_csv(text, sep=";", dtype=str)
+
+    data = data.loc[data["IRIS"].str.startswith("751", na=False)].copy()
+    data["arrondissement"] = pd.to_numeric(data["IRIS"].str[3:5], errors="coerce")
+    for column in ["P21_RP", "P21_RP_LOCHLMV"]:
+        data[column] = french_to_float(data[column])
+
+    result = (
+        data.groupby("arrondissement")
+        .agg(
+            main_residences=("P21_RP", "sum"),
+            social_housing_units=("P21_RP_LOCHLMV", "sum"),
+        )
+        .reset_index()
+    )
+    result["main_residences"] = result["main_residences"].round(0)
+    result["social_housing_units"] = result["social_housing_units"].round(0)
+    main_residences_base = result["main_residences"].where(result["main_residences"] != 0)
+    result["social_housing_share_pct"] = (
+        result["social_housing_units"] / main_residences_base * 100.0
+    ).round(1)
     return result
 
 
@@ -1276,6 +1420,11 @@ def build_city_summary(summary: pd.DataFrame) -> dict[str, float | int]:
         "reference_rent_majorated_eur_m2": round(float(summary["reference_rent_majorated_eur_m2"].median()), 2),
         "social_units_financed": int(summary["social_units_financed"].sum()),
         "social_units_financed_5y": int(summary["social_units_financed_5y"].sum()),
+        "social_housing_share_pct": round(
+            float(summary["social_housing_units"].sum() / summary["main_residences"].sum() * 100.0), 1
+        )
+        if summary["main_residences"].sum()
+        else None,
         "quality_of_life_score": round(float(summary["quality_of_life_score"].median()), 2),
         "months_income_for_1sqm": round(float(summary["months_income_for_1sqm"].median()), 2),
         "estimated_50m2_rent_effort_pct": round(float(summary["estimated_50m2_rent_effort_pct"].median()), 1),
@@ -1291,10 +1440,16 @@ def metric_catalog() -> dict[str, dict[str, object]]:
         "median_rooms": {"label": "Pieces medianes", "unit": "pieces", "supports_year": True},
         "apartment_share_pct": {"label": "Part appartements", "unit": "%", "supports_year": True},
         "house_share_pct": {"label": "Part maisons", "unit": "%", "supports_year": True},
+        "studio_t1_share_pct": {"label": "Part studios / T1", "unit": "%", "supports_year": True},
+        "t2_share_pct": {"label": "Part T2", "unit": "%", "supports_year": True},
+        "t3_share_pct": {"label": "Part T3", "unit": "%", "supports_year": True},
+        "t4_share_pct": {"label": "Part T4", "unit": "%", "supports_year": True},
+        "t5p_share_pct": {"label": "Part T5 et plus", "unit": "%", "supports_year": True},
         "median_income_eur": {"label": "Revenu median", "unit": "EUR/an", "supports_year": False},
         "reference_rent_majorated_eur_m2": {"label": "Loyer majore moyen", "unit": "EUR/m²", "supports_year": False},
         "social_units_financed": {"label": "Logements sociaux finances", "unit": "count", "supports_year": False},
         "social_units_financed_5y": {"label": "Logements sociaux finances sur 5 ans", "unit": "count", "supports_year": False},
+        "social_housing_share_pct": {"label": "Part de logements sociaux", "unit": "%", "supports_year": False},
         "months_income_for_1sqm": {"label": "Mois de revenu pour 1 m²", "unit": "months", "supports_year": False},
         "estimated_50m2_rent_effort_pct": {"label": "Effort locatif estime pour 50 m²", "unit": "%", "supports_year": False},
         "quality_of_life_score": {"label": "Qualite de vie", "unit": "/10", "supports_year": False},

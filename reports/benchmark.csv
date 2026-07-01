@@ -1,0 +1,10 @@
+endpoint,samples,errors,mean_ms,p50_ms,p95_ms,p99_ms,max_ms,throughput_rps,sla_verdict
+/health,20,0,13.5,14.8,29.6,39.4,39.4,73.9,OK
+/sources,20,0,39.6,36.1,57.2,85.9,85.9,25.3,OK
+/api/meta,20,0,8.0,2.8,24.9,25.7,25.7,125.1,OK
+/api/overview?sales_year=2025,20,0,18.3,11.0,47.0,50.8,50.8,54.7,OK
+/api/timeline?arrondissement=11,20,0,15.8,8.1,35.6,39.3,39.3,63.4,OK
+/api/compare?left=11&right=18&sales_year=2025,20,0,16.5,12.3,26.7,34.5,34.5,60.7,OK
+/api/map?metric=median_price_m2&level=arrondissement&year=2025,20,0,19.8,15.9,35.4,37.0,37.0,50.5,OK
+/api/map?metric=median_price_m2&level=quartier&year=2025,20,0,14.2,9.5,26.8,58.4,58.4,70.3,OK
+/api/map?metric=median_price_m2&level=building&year=2025,20,0,316.0,317.3,339.6,387.7,387.7,3.2,SLA KO

@@ -1,0 +1,17 @@
+generated_at,kind,name,value
+2026-07-01T12:54:28.515672+00:00,stage_seconds,load_references,3.279
+2026-07-01T12:54:28.515672+00:00,stage_seconds,load_sales,3.942
+2026-07-01T12:54:28.515672+00:00,stage_seconds,build_sales_metrics,13.964
+2026-07-01T12:54:28.515672+00:00,stage_seconds,build_context_metrics,38.882
+2026-07-01T12:54:28.515672+00:00,stage_seconds,build_summary,0.022
+2026-07-01T12:54:28.515672+00:00,stage_seconds,persist_storage,87.342
+2026-07-01T12:54:28.515672+00:00,stage_seconds,write_datalake,5.34
+2026-07-01T12:54:28.515672+00:00,stage_seconds,apply_constraints,1.646
+2026-07-01T12:54:28.515672+00:00,rows,sales_transactions,88974
+2026-07-01T12:54:28.515672+00:00,rows,gold_sales_yearly,60
+2026-07-01T12:54:28.515672+00:00,rows,gold_arrondissement_summary,20
+2026-07-01T12:54:28.515672+00:00,rows,gold_sales_geocoded,88974
+2026-07-01T12:54:28.515672+00:00,rows,gold_sales_quartier_yearly,240
+2026-07-01T12:54:28.515672+00:00,rows,gold_sales_street_yearly,9739
+2026-07-01T12:54:28.515672+00:00,rows,gold_sales_building_yearly,54645
+2026-07-01T12:54:28.515672+00:00,stage_seconds,TOTAL,154.459

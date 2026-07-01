@@ -18,7 +18,13 @@ const state = {
   quartierLeft: null,
   quartierRight: null,
   compareMode: "arrondissement",
+  playback: {
+    playing: false,
+    timer: null,
+  },
 };
+
+const PLAYBACK_INTERVAL_MS = 1500;
 
 const SALES_MAP_METRICS = [
   "median_price_m2",
@@ -28,6 +34,11 @@ const SALES_MAP_METRICS = [
   "median_rooms",
   "apartment_share_pct",
   "house_share_pct",
+  "studio_t1_share_pct",
+  "t2_share_pct",
+  "t3_share_pct",
+  "t4_share_pct",
+  "t5p_share_pct",
 ];
 
 const MAP_METRIC_PREFERENCES = {
@@ -38,6 +49,7 @@ const MAP_METRIC_PREFERENCES = {
     "reference_rent_majorated_eur_m2",
     "social_units_financed",
     "social_units_financed_5y",
+    "social_housing_share_pct",
     "quality_of_life_score",
   ],
   quartier: SALES_MAP_METRICS,
@@ -90,6 +102,11 @@ function safeMetricLabel(key) {
     median_rooms: "Pieces medianes",
     apartment_share_pct: "Part appartements",
     house_share_pct: "Part maisons",
+    studio_t1_share_pct: "Part studios / T1",
+    t2_share_pct: "Part T2",
+    t3_share_pct: "Part T3",
+    t4_share_pct: "Part T4",
+    t5p_share_pct: "Part T5 et plus",
   };
   return state.meta?.metrics?.[key]?.label ?? fallbackLabels[key] ?? key;
 }
@@ -194,8 +211,60 @@ function buildingSourceLabel(source) {
   return labels[source] ?? source ?? "n.d.";
 }
 
+// --- Authentification JWT (connexion directe) --------------------------------
+// Le frontend s'authentifie tout seul au chargement : il echange les identifiants
+// de service contre un JWT Bearer (POST /auth/token) puis attache ce token a tous
+// les appels /api/*. Aucun ecran de login. Les identifiants doivent correspondre
+// a AUTH_USERNAME / AUTH_PASSWORD cote API (voir docker-compose.yml).
+const AUTH = {
+  username: "urban",
+  password: "urban",
+  token: null,
+  pending: null,
+};
+
+async function login() {
+  const body = new URLSearchParams();
+  body.set("username", AUTH.username);
+  body.set("password", AUTH.password);
+  const response = await fetch("/auth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (response.status === 503) {
+    // JWT non configure cote serveur => API ouverte, pas de token necessaire.
+    AUTH.token = null;
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`Authentification echouee (${response.status}).`);
+  }
+  const data = await response.json();
+  AUTH.token = data.access_token;
+  return AUTH.token;
+}
+
+async function ensureToken() {
+  if (AUTH.token) return AUTH.token;
+  if (!AUTH.pending) {
+    AUTH.pending = login().finally(() => {
+      AUTH.pending = null;
+    });
+  }
+  return AUTH.pending;
+}
+
 async function fetchJson(url) {
-  const response = await fetch(url);
+  await ensureToken();
+  const authHeaders = () => (AUTH.token ? { Authorization: `Bearer ${AUTH.token}` } : {});
+  let response = await fetch(url, { headers: authHeaders() });
+  if (response.status === 401) {
+    // Token expire ou invalide : on se reconnecte une fois et on rejoue.
+    AUTH.token = null;
+    await ensureToken();
+    response = await fetch(url, { headers: authHeaders() });
+  }
   if (!response.ok) {
     const message = await response.text();
     throw new Error(`${response.status} ${message}`);
@@ -233,6 +302,7 @@ function populateMapLevelSelect() {
   });
   select.value = state.mapLevel;
   select.onchange = async (event) => {
+    stopPlayback();
     state.mapLevel = event.target.value;
     populateMetricSelect();
     await refreshMap();
@@ -260,6 +330,7 @@ function populateMetricSelect() {
   }
   select.value = state.metric;
   select.onchange = async (event) => {
+    stopPlayback();
     state.metric = event.target.value;
     await refreshMap();
   };
@@ -276,9 +347,137 @@ function populateYearSelect() {
   });
   select.value = String(state.salesYear);
   select.onchange = async (event) => {
-    state.salesYear = Number(event.target.value);
-    await refreshAll();
+    stopPlayback();
+    await applySalesYear(Number(event.target.value), { full: true });
   };
+}
+
+function salesYearsAsc() {
+  return [...(state.meta?.available_sales_years ?? [])].sort((left, right) => left - right);
+}
+
+function syncYearControls() {
+  const years = salesYearsAsc();
+  const index = Math.max(0, years.indexOf(state.salesYear));
+  const range = document.getElementById("timeline-range");
+  const yearValue = document.getElementById("timeline-year-value");
+  const select = document.getElementById("sales-year-select");
+
+  if (range) {
+    range.min = "0";
+    range.max = String(Math.max(years.length - 1, 0));
+    range.value = String(index);
+    range.disabled = years.length <= 1;
+  }
+  if (yearValue) {
+    yearValue.textContent = years.length ? String(state.salesYear) : "—";
+  }
+  if (select && select.value !== String(state.salesYear)) {
+    select.value = String(state.salesYear);
+  }
+}
+
+async function applySalesYear(year, { full = false } = {}) {
+  if (!Number.isFinite(Number(year))) {
+    return;
+  }
+  state.salesYear = Number(year);
+  syncYearControls();
+  if (full) {
+    await refreshAll();
+    return;
+  }
+  // Year change only affects city-level views; the per-arrondissement timeline
+  // already shows the full series, so it is intentionally skipped here.
+  await refreshOverview();
+  await Promise.all([refreshMap(), refreshComparison()]);
+}
+
+function setupTimelinePlayer() {
+  const range = document.getElementById("timeline-range");
+  const playButton = document.getElementById("timeline-play");
+
+  const ticks = document.getElementById("timeline-ticks");
+  if (ticks) {
+    ticks.innerHTML = salesYearsAsc()
+      .map((year) => `<span>${year}</span>`)
+      .join("");
+  }
+  syncYearControls();
+
+  if (range) {
+    range.oninput = async (event) => {
+      stopPlayback();
+      const years = salesYearsAsc();
+      const index = Math.min(Math.max(Number(event.target.value), 0), Math.max(years.length - 1, 0));
+      await applySalesYear(years[index]);
+    };
+  }
+
+  if (playButton) {
+    playButton.onclick = () => togglePlayback();
+  }
+}
+
+function setPlaybackState(playing) {
+  state.playback.playing = playing;
+  const player = document.getElementById("timeline-player");
+  const playButton = document.getElementById("timeline-play");
+  if (player) {
+    player.classList.toggle("is-playing", playing);
+  }
+  if (playButton) {
+    playButton.setAttribute("aria-pressed", String(playing));
+    const text = playButton.querySelector(".timeline-play-text");
+    if (text) {
+      text.textContent = playing ? "Pause" : "Rejouer";
+    }
+  }
+}
+
+function stopPlayback() {
+  if (state.playback.timer) {
+    clearTimeout(state.playback.timer);
+    state.playback.timer = null;
+  }
+  if (state.playback.playing) {
+    setPlaybackState(false);
+  }
+}
+
+function togglePlayback() {
+  if (state.playback.playing) {
+    stopPlayback();
+    return;
+  }
+  const years = salesYearsAsc();
+  if (years.length <= 1) {
+    return;
+  }
+  setPlaybackState(true);
+  // Restart from the first year when sitting on the last one, otherwise resume forward.
+  const startIndex = state.salesYear === years[years.length - 1] ? 0 : years.indexOf(state.salesYear) + 1;
+  schedulePlaybackStep(startIndex);
+}
+
+function schedulePlaybackStep(index) {
+  state.playback.timer = setTimeout(async () => {
+    if (!state.playback.playing) {
+      return;
+    }
+    const years = salesYearsAsc();
+    const safeIndex = ((index % years.length) + years.length) % years.length;
+    await applySalesYear(years[safeIndex]);
+    if (!state.playback.playing) {
+      return;
+    }
+    if (safeIndex === years.length - 1) {
+      // One full replay completed; pause on the latest year.
+      stopPlayback();
+      return;
+    }
+    schedulePlaybackStep(safeIndex + 1);
+  }, PLAYBACK_INTERVAL_MS);
 }
 
 function populateArrondissementSelects(arrondissements) {
@@ -340,6 +539,11 @@ function renderCitySummary(city) {
       context: `Derniere annee sociale ${state.meta.latest_social_year}`,
     },
     {
+      label: "Part de logements sociaux",
+      value: formatMetricValue("social_housing_share_pct", city.social_housing_share_pct),
+      context: "HLM / residences principales (INSEE 2021)",
+    },
+    {
       label: "Effort locatif estime pour 50 m²",
       value: formatMetricValue("estimated_50m2_rent_effort_pct", city.estimated_50m2_rent_effort_pct),
       context: "Loyer majore / revenu median",
@@ -389,6 +593,7 @@ function renderComparePanel(arrondissementData, quartierData) {
     "median_income_eur",
     "reference_rent_majorated_eur_m2",
     "social_units_financed",
+    "social_housing_share_pct",
     "quality_of_life_score",
     "months_income_for_1sqm",
     "estimated_50m2_rent_effort_pct",
@@ -1193,6 +1398,7 @@ async function init() {
     populateMapLevelSelect();
     populateMetricSelect();
     populateYearSelect();
+    setupTimelinePlayer();
     renderSources();
     await refreshAll();
   } catch (error) {

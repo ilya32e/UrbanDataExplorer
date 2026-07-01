@@ -1,0 +1,18 @@
+[2026-06-28T10:15:32.065+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T10:15:32.121+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_quartier_paris manual__2026-06-28T09:54:33+00:00 [queued]>
+[2026-06-28T10:15:32.146+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_quartier_paris manual__2026-06-28T09:54:33+00:00 [queued]>
+[2026-06-28T10:15:32.147+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-28T10:15:32.203+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_quartier_paris> on 2026-06-28 09:54:33+00:00
+[2026-06-28T10:15:32.226+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_quartier_paris', 'manual__2026-06-28T09:54:33+00:00', '--job-id', '19', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmppkzfc69s']
+[2026-06-28T10:15:32.237+0000] {standard_task_runner.py:105} INFO - Job 19: Subtask download.download_quartier_paris
+[2026-06-28T10:15:32.239+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=1298) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T10:15:32.245+0000] {standard_task_runner.py:72} INFO - Started process 1306 to run task
+[2026-06-28T10:15:32.539+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_quartier_paris manual__2026-06-28T09:54:33+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T10:15:32.825+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_quartier_paris' AIRFLOW_CTX_EXECUTION_DATE='2026-06-28T09:54:33+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-06-28T09:54:33+00:00'
+[2026-06-28T10:15:32.839+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T10:15:35.184+0000] {logging_mixin.py:190} INFO - quartier_paris: /opt/***/project/data/bronze/reference/quartier_paris.geojson
+[2026-06-28T10:15:35.186+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-28T10:15:35.210+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T10:15:35.212+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_quartier_paris, run_id=manual__2026-06-28T09:54:33+00:00, execution_date=20260628T095433, start_date=20260628T101532, end_date=20260628T101535
+[2026-06-28T10:15:35.310+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-28T10:15:35.335+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

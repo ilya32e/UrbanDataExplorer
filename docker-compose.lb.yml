@@ -1,0 +1,25 @@
+# Surcouche de scalabilite / load-balancing (C1.4).
+#
+# Usage :
+#   docker compose -f docker-compose.yml -f docker-compose.lb.yml up -d --scale api=3 lb
+#
+# - Libere le port hote de `api` (!override) pour autoriser plusieurs replicas.
+# - Ajoute un load-balancer nginx expose sur http://localhost:8080 qui repartit
+#   le trafic sur les replicas via le DNS interne de Docker.
+#
+# Verification de la repartition :
+#   for ($i=0; $i -lt 6; $i++) { (Invoke-RestMethod http://localhost:8080/metrics).instance }
+#   -> on voit alterner les noms d'instance (hostnames des replicas).
+services:
+  api:
+    ports: !override []
+
+  lb:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${LB_EXPOSE_PORT:-8080}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro

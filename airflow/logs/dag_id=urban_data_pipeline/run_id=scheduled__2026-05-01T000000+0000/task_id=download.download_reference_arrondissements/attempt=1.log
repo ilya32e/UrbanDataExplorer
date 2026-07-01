@@ -1,0 +1,37 @@
+[2026-06-28T09:54:31.880+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T09:54:31.919+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.937+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T09:54:31.939+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-28T09:54:31.977+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_reference_arrondissements> on 2026-05-01 00:00:00+00:00
+[2026-06-28T09:54:31.992+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_reference_arrondissements', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '14', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmp26gic4qb']
+[2026-06-28T09:54:31.999+0000] {standard_task_runner.py:105} INFO - Job 14: Subtask download.download_reference_arrondissements
+[2026-06-28T09:54:32.001+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=535) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T09:54:32.005+0000] {standard_task_runner.py:72} INFO - Started process 551 to run task
+[2026-06-28T09:54:32.165+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T09:54:32.377+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_reference_arrondissements' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-28T09:54:32.388+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T09:54:34.512+0000] {logging_mixin.py:190} INFO - reference_arrondissements: /opt/***/project/data/bronze/reference/arrondissements.geojson
+[2026-06-28T09:54:34.516+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-28T09:54:34.540+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T09:54:34.541+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_reference_arrondissements, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260628T095431, end_date=20260628T095434
+[2026-06-28T09:54:34.594+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-28T09:54:34.638+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-28T09:54:34.646+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
+[2026-06-29T08:21:48.307+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-29T08:21:48.332+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.347+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:21:48.349+0000] {taskinstance.py:2866} INFO - Starting attempt 1 of 3
+[2026-06-29T08:21:48.375+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): download.download_reference_arrondissements> on 2026-05-01 00:00:00+00:00
+[2026-06-29T08:21:48.386+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'download.download_reference_arrondissements', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '108', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpie99mhxz']
+[2026-06-29T08:21:48.392+0000] {standard_task_runner.py:105} INFO - Job 108: Subtask download.download_reference_arrondissements
+[2026-06-29T08:21:48.392+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=556) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-29T08:21:48.393+0000] {standard_task_runner.py:72} INFO - Started process 562 to run task
+[2026-06-29T08:21:48.497+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.download.download_reference_arrondissements scheduled__2026-05-01T00:00:00+00:00 [running]> on host 875a7b04857f
+[2026-06-29T08:21:48.605+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='download.download_reference_arrondissements' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-29T08:21:48.612+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-29T08:21:49.653+0000] {logging_mixin.py:190} INFO - reference_arrondissements: /opt/***/project/data/bronze/reference/arrondissements.geojson
+[2026-06-29T08:21:49.654+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-29T08:21:49.667+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-29T08:21:49.668+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=download.download_reference_arrondissements, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260629T082148, end_date=20260629T082149
+[2026-06-29T08:21:49.742+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-29T08:21:49.754+0000] {local_task_job_runner.py:245} INFO - ::endgroup::

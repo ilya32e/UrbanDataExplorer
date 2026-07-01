@@ -49,6 +49,15 @@ sources:
     target_file: filosofi-iris-2021.csv.zip
     summary: Revenus, niveau de vie et precarite a l'echelle IRIS.
 
+  insee_logement_2021:
+    label: INSEE Recensement - Logement 2021 (IRIS)
+    group: INSEE
+    kind: file
+    url: https://www.insee.fr/fr/statistiques/fichier/8268838/base-ic-logement-2021_csv.zip
+    target_dir: data/bronze/raw/insee
+    target_file: logement-iris-2021.csv.zip
+    summary: Parc de logements et residences principales HLM a l'echelle IRIS, pour calculer la part de logements sociaux par arrondissement.
+
   paris_loyers:
     label: Paris Data - Encadrement des loyers
     group: opendata.paris.fr

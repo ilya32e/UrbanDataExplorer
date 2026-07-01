@@ -1,0 +1,203 @@
+[2026-06-28T10:03:18.009+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-28T10:03:18.032+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T10:03:18.044+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-28T10:03:18.045+0000] {taskinstance.py:2866} INFO - Starting attempt 2 of 3
+[2026-06-28T10:03:18.070+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): build_silver_gold> on 2026-05-01 00:00:00+00:00
+[2026-06-28T10:03:18.080+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'build_silver_gold', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '17', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmpsogxtu27']
+[2026-06-28T10:03:18.083+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=875) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-28T10:03:18.084+0000] {standard_task_runner.py:105} INFO - Job 17: Subtask build_silver_gold
+[2026-06-28T10:03:18.085+0000] {standard_task_runner.py:72} INFO - Started process 876 to run task
+[2026-06-28T10:03:18.206+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [running]> on host a599c75c3dcc
+[2026-06-28T10:03:18.374+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='build_silver_gold' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-28T10:03:18.375+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-28T10:06:58.173+0000] {taskinstance.py:3311} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 762, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 733, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 422, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/urban_data_pipeline_dag.py", line 67, in build_gold_zone
+    code = cmd_build(skip_noise=skip_noise)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/cli.py", line 116, in cmd_build
+    outputs = build_gold(include_noise=not skip_noise)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/build.py", line 173, in build_gold
+    for key, status in apply_table_keys(GOLD_TABLE_KEYS).items():
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/common/database.py", line 114, in apply_table_keys
+    _execute_ddl(f"ALTER TABLE `{table_name}` ADD PRIMARY KEY ({columns})")
+  File "/opt/airflow/project/common/database.py", line 95, in _execute_ddl
+    connection.commit()
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'Connection' object has no attribute 'commit'
+[2026-06-28T10:06:58.312+0000] {taskinstance.py:1225} INFO - Marking task as UP_FOR_RETRY. dag_id=urban_data_pipeline, task_id=build_silver_gold, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260628T100318, end_date=20260628T100658
+[2026-06-28T10:06:58.334+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-28T10:06:58.336+0000] {standard_task_runner.py:124} ERROR - Failed to execute job 17 for task build_silver_gold ('Connection' object has no attribute 'commit'; 876)
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py", line 117, in _start_by_fork
+    ret = args.func(args, dag=self.dag)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/cli_config.py", line 49, in command
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/cli.py", line 116, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 483, in task_run
+    task_return_code = _run_task_by_selected_method(args, _dag, ti)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 256, in _run_task_by_selected_method
+    return _run_raw_task(args, ti)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/cli/commands/task_command.py", line 341, in _run_raw_task
+    return ti._run_raw_task(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/session.py", line 97, in wrapper
+    return func(*args, session=session, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3005, in _run_raw_task
+    return _run_raw_task(
+           ^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 273, in _run_raw_task
+    TaskInstance._execute_task_with_callbacks(
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3159, in _execute_task_with_callbacks
+    result = self._execute_task(context, task_orig)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 3183, in _execute_task
+    return _execute_task(self, context, task_orig)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 762, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 733, in _execute_callable
+    return ExecutionCallableRunner(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 422, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 238, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 256, in execute_callable
+    return runner.run(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/utils/operator_helpers.py", line 252, in run
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/urban_data_pipeline_dag.py", line 67, in build_gold_zone
+    code = cmd_build(skip_noise=skip_noise)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/cli.py", line 116, in cmd_build
+    outputs = build_gold(include_noise=not skip_noise)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/pipeline/src/urban_data_explorer/build.py", line 173, in build_gold
+    for key, status in apply_table_keys(GOLD_TABLE_KEYS).items():
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/project/common/database.py", line 114, in apply_table_keys
+    _execute_ddl(f"ALTER TABLE `{table_name}` ADD PRIMARY KEY ({columns})")
+  File "/opt/airflow/project/common/database.py", line 95, in _execute_ddl
+    connection.commit()
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'Connection' object has no attribute 'commit'
+[2026-06-28T10:06:58.488+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 1
+[2026-06-28T10:06:58.543+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-28T10:06:58.548+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
+[2026-06-29T08:45:35.509+0000] {local_task_job_runner.py:123} INFO - ::group::Pre task execution logs
+[2026-06-29T08:45:35.527+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:45:35.535+0000] {taskinstance.py:2613} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [queued]>
+[2026-06-29T08:45:35.536+0000] {taskinstance.py:2866} INFO - Starting attempt 2 of 3
+[2026-06-29T08:45:35.547+0000] {taskinstance.py:2889} INFO - Executing <Task(PythonOperator): build_silver_gold> on 2026-05-01 00:00:00+00:00
+[2026-06-29T08:45:35.553+0000] {standard_task_runner.py:104} INFO - Running: ['***', 'tasks', 'run', 'urban_data_pipeline', 'build_silver_gold', 'scheduled__2026-05-01T00:00:00+00:00', '--job-id', '124', '--raw', '--subdir', 'DAGS_FOLDER/urban_data_pipeline_dag.py', '--cfg-path', '/tmp/tmp6me4w700']
+[2026-06-29T08:45:35.556+0000] {logging_mixin.py:190} WARNING - /home/***/.local/lib/python3.12/site-packages/***/task/task_runner/standard_task_runner.py:70 DeprecationWarning: This process (pid=184) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-06-29T08:45:35.556+0000] {standard_task_runner.py:105} INFO - Job 124: Subtask build_silver_gold
+[2026-06-29T08:45:35.557+0000] {standard_task_runner.py:72} INFO - Started process 195 to run task
+[2026-06-29T08:45:35.628+0000] {task_command.py:467} INFO - Running <TaskInstance: urban_data_pipeline.build_silver_gold scheduled__2026-05-01T00:00:00+00:00 [running]> on host 875a7b04857f
+[2026-06-29T08:45:35.710+0000] {taskinstance.py:3132} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='urban-data-explorer' AIRFLOW_CTX_DAG_ID='urban_data_pipeline' AIRFLOW_CTX_TASK_ID='build_silver_gold' AIRFLOW_CTX_EXECUTION_DATE='2026-05-01T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-01T00:00:00+00:00'
+[2026-06-29T08:45:35.711+0000] {taskinstance.py:731} INFO - ::endgroup::
+[2026-06-29T08:48:03.498+0000] {logging_mixin.py:190} INFO - silver_sales: silver_sales_yearly
+[2026-06-29T08:48:03.500+0000] {logging_mixin.py:190} INFO - silver_sales_quartier: silver_sales_quartier_yearly
+[2026-06-29T08:48:03.501+0000] {logging_mixin.py:190} INFO - silver_sales_iris: silver_sales_iris_yearly
+[2026-06-29T08:48:03.502+0000] {logging_mixin.py:190} INFO - silver_sales_geocoded: silver_sales_geocoded
+[2026-06-29T08:48:03.504+0000] {logging_mixin.py:190} INFO - silver_sales_street: silver_sales_street_yearly
+[2026-06-29T08:48:03.505+0000] {logging_mixin.py:190} INFO - silver_sales_building: silver_sales_building_yearly
+[2026-06-29T08:48:03.506+0000] {logging_mixin.py:190} INFO - silver_income: silver_income_arrondissement
+[2026-06-29T08:48:03.507+0000] {logging_mixin.py:190} INFO - silver_rents: silver_rents_yearly
+[2026-06-29T08:48:03.508+0000] {logging_mixin.py:190} INFO - silver_social: silver_social_yearly
+[2026-06-29T08:48:03.509+0000] {logging_mixin.py:190} INFO - silver_noise: silver_noise_arrondissement
+[2026-06-29T08:48:03.510+0000] {logging_mixin.py:190} INFO - gold_summary: gold_arrondissement_summary
+[2026-06-29T08:48:03.511+0000] {logging_mixin.py:190} INFO - gold_sales: gold_sales_yearly
+[2026-06-29T08:48:03.512+0000] {logging_mixin.py:190} INFO - gold_sales_quartier: gold_sales_quartier_yearly
+[2026-06-29T08:48:03.513+0000] {logging_mixin.py:190} INFO - gold_sales_iris: gold_sales_iris_yearly
+[2026-06-29T08:48:03.514+0000] {logging_mixin.py:190} INFO - gold_sales_geocoded: gold_sales_geocoded
+[2026-06-29T08:48:03.515+0000] {logging_mixin.py:190} INFO - gold_sales_street: gold_sales_street_yearly
+[2026-06-29T08:48:03.516+0000] {logging_mixin.py:190} INFO - gold_sales_building: gold_sales_building_yearly
+[2026-06-29T08:48:03.517+0000] {logging_mixin.py:190} INFO - gold_social: gold_social_yearly
+[2026-06-29T08:48:03.519+0000] {logging_mixin.py:190} INFO - gold_rents: gold_rents_yearly
+[2026-06-29T08:48:03.520+0000] {logging_mixin.py:190} INFO - gold_income: gold_income_arrondissement
+[2026-06-29T08:48:03.521+0000] {logging_mixin.py:190} INFO - gold_noise: gold_noise_arrondissement
+[2026-06-29T08:48:03.523+0000] {logging_mixin.py:190} INFO - gold_geojson: gold_arrondissements_geojson
+[2026-06-29T08:48:03.524+0000] {logging_mixin.py:190} INFO - gold_quartiers_geojson: gold_quartiers_geojson
+[2026-06-29T08:48:03.526+0000] {logging_mixin.py:190} INFO - gold_streets_geojson: gold_streets_geojson
+[2026-06-29T08:48:03.527+0000] {logging_mixin.py:190} INFO - gold_iris_geojson: gold_iris_geojson
+[2026-06-29T08:48:03.529+0000] {logging_mixin.py:190} INFO - gold_spatial_coverage: gold_documents/gold_sales_spatial_coverage
+[2026-06-29T08:48:03.531+0000] {logging_mixin.py:190} INFO - gold_dashboard: gold_documents/gold_dashboard_metadata
+[2026-06-29T08:48:03.532+0000] {logging_mixin.py:190} INFO - lake:silver:sales_yearly: /opt/***/project/data/silver/sales_yearly
+[2026-06-29T08:48:03.534+0000] {logging_mixin.py:190} INFO - lake:silver:sales_quartier_yearly: /opt/***/project/data/silver/sales_quartier_yearly
+[2026-06-29T08:48:03.535+0000] {logging_mixin.py:190} INFO - lake:silver:sales_iris_yearly: /opt/***/project/data/silver/sales_iris_yearly
+[2026-06-29T08:48:03.539+0000] {logging_mixin.py:190} INFO - lake:silver:sales_geocoded: /opt/***/project/data/silver/sales_geocoded
+[2026-06-29T08:48:03.543+0000] {logging_mixin.py:190} INFO - lake:silver:sales_street_yearly: /opt/***/project/data/silver/sales_street_yearly
+[2026-06-29T08:48:03.546+0000] {logging_mixin.py:190} INFO - lake:silver:sales_building_yearly: /opt/***/project/data/silver/sales_building_yearly
+[2026-06-29T08:48:03.549+0000] {logging_mixin.py:190} INFO - lake:silver:income_arrondissement: /opt/***/project/data/silver/income_arrondissement
+[2026-06-29T08:48:03.557+0000] {logging_mixin.py:190} INFO - lake:silver:rents_yearly: /opt/***/project/data/silver/rents_yearly
+[2026-06-29T08:48:03.560+0000] {logging_mixin.py:190} INFO - lake:silver:social_yearly: /opt/***/project/data/silver/social_yearly
+[2026-06-29T08:48:03.561+0000] {logging_mixin.py:190} INFO - lake:silver:noise_arrondissement: /opt/***/project/data/silver/noise_arrondissement
+[2026-06-29T08:48:03.563+0000] {logging_mixin.py:190} INFO - lake:gold:arrondissement_summary: /opt/***/project/data/gold/arrondissement_summary
+[2026-06-29T08:48:03.565+0000] {logging_mixin.py:190} INFO - lake:gold:sales_yearly: /opt/***/project/data/gold/sales_yearly
+[2026-06-29T08:48:03.568+0000] {logging_mixin.py:190} INFO - lake:gold:sales_quartier_yearly: /opt/***/project/data/gold/sales_quartier_yearly
+[2026-06-29T08:48:03.570+0000] {logging_mixin.py:190} INFO - lake:gold:sales_iris_yearly: /opt/***/project/data/gold/sales_iris_yearly
+[2026-06-29T08:48:03.574+0000] {logging_mixin.py:190} INFO - lake:gold:sales_geocoded: /opt/***/project/data/gold/sales_geocoded
+[2026-06-29T08:48:03.576+0000] {logging_mixin.py:190} INFO - lake:gold:sales_street_yearly: /opt/***/project/data/gold/sales_street_yearly
+[2026-06-29T08:48:03.578+0000] {logging_mixin.py:190} INFO - lake:gold:sales_building_yearly: /opt/***/project/data/gold/sales_building_yearly
+[2026-06-29T08:48:03.580+0000] {logging_mixin.py:190} INFO - lake:gold:social_yearly: /opt/***/project/data/gold/social_yearly
+[2026-06-29T08:48:03.582+0000] {logging_mixin.py:190} INFO - lake:gold:rents_yearly: /opt/***/project/data/gold/rents_yearly
+[2026-06-29T08:48:03.583+0000] {logging_mixin.py:190} INFO - lake:gold:income_arrondissement: /opt/***/project/data/gold/income_arrondissement
+[2026-06-29T08:48:03.584+0000] {logging_mixin.py:190} INFO - lake:gold:noise_arrondissement: /opt/***/project/data/gold/noise_arrondissement
+[2026-06-29T08:48:03.586+0000] {logging_mixin.py:190} INFO - constraint:gold_arrondissement_summary.PRIMARY: ok
+[2026-06-29T08:48:03.588+0000] {logging_mixin.py:190} INFO - constraint:gold_sales_yearly.PRIMARY: ok
+[2026-06-29T08:48:03.589+0000] {logging_mixin.py:190} INFO - constraint:gold_income_arrondissement.PRIMARY: ok
+[2026-06-29T08:48:03.590+0000] {logging_mixin.py:190} INFO - constraint:gold_rents_yearly.PRIMARY: ok
+[2026-06-29T08:48:03.591+0000] {logging_mixin.py:190} INFO - constraint:gold_social_yearly.PRIMARY: ok
+[2026-06-29T08:48:03.592+0000] {logging_mixin.py:190} INFO - constraint:gold_noise_arrondissement.PRIMARY: ok
+[2026-06-29T08:48:03.593+0000] {logging_mixin.py:190} INFO - constraint:gold_sales_quartier_yearly.idx_arrondissement_year: ok
+[2026-06-29T08:48:03.594+0000] {logging_mixin.py:190} INFO - constraint:gold_sales_iris_yearly.idx_arrondissement_year: ok
+[2026-06-29T08:48:03.594+0000] {logging_mixin.py:190} INFO - constraint:gold_sales_street_yearly.idx_arrondissement_year: ok
+[2026-06-29T08:48:03.595+0000] {logging_mixin.py:190} INFO - constraint:gold_sales_building_yearly.idx_arrondissement_year: ok
+[2026-06-29T08:48:03.596+0000] {logging_mixin.py:190} INFO - pipeline_metrics: /opt/***/project/reports/pipeline_metrics.csv
+[2026-06-29T08:48:03.597+0000] {logging_mixin.py:190} INFO - pipeline_total_seconds: 146.529
+[2026-06-29T08:48:03.598+0000] {python.py:240} INFO - Done. Returned value was: None
+[2026-06-29T08:48:03.617+0000] {taskinstance.py:340} INFO - ::group::Post task execution logs
+[2026-06-29T08:48:03.618+0000] {taskinstance.py:352} INFO - Marking task as SUCCESS. dag_id=urban_data_pipeline, task_id=build_silver_gold, run_id=scheduled__2026-05-01T00:00:00+00:00, execution_date=20260501T000000, start_date=20260629T084535, end_date=20260629T084803
+[2026-06-29T08:48:03.704+0000] {local_task_job_runner.py:266} INFO - Task exited with return code 0
+[2026-06-29T08:48:03.726+0000] {taskinstance.py:3895} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-06-29T08:48:03.730+0000] {local_task_job_runner.py:245} INFO - ::endgroup::
